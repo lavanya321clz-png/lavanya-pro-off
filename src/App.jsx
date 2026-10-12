@@ -61,6 +61,7 @@ import Clients from './components/Clients';
 import Appointments from './components/Appointments';
 import Tasks from './components/Tasks';
 import Settings from './components/Settings';
+import { api } from './services/api';
 import {
   initialUsers,
   initialRbacMatrix,
@@ -73,4 +74,935 @@ import {
   initialAppointments
 } from './data/mockData';
 
-export default function App(){let[e,t]=useState(`dashboard`),[n,r]=useState(!1),[i,a]=useState(`light`),[o,s]=useState(initialUsers),[c,l]=useState(initialUsers[0]),[u,d]=useState(initialRbacMatrix),[f,p]=useState(!1),m=c.role,h=u[m]?.permissions||{},[g,v]=useState(initialRecords),[y,b]=useState(initialCases),[x,S]=useState(initialClients),[C,w]=useState(initialTasks),[T,E]=useState(initialNotifications),[D,O]=useState(initialActivities),[k,ee]=useState(initialAppointments),[te,ne]=useState(``),[ae,j]=useState(!1);useEffect(()=>{document.documentElement.setAttribute(`data-theme`,i)},[i]);let ce=()=>{a(e=>e===`light`?`dark`:`light`)},le=e=>{d(e)},ue=(e,t)=>{s(o.map(n=>n.id===e?{...n,role:t}:n)),c.id===e&&l(e=>({...e,role:t})),Fe(`updated user role`,`User ID: ${e} to ${t}`)},de=e=>{s([...o,e]),Fe(`added user profile`,e.name)},me=e=>{let t=e.clientName?`[Client CRM Profile: ${e.clientName}]`:`[System Alert]`;Swal.fire({title:`Dispatch Client Alert?`,html:`<div style="text-align: left;"><p style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">${t}</p><p>Do you want to dispatch a critical user alert for client: <strong>"${e.clientName||`System`}"</strong>?</p><p style="margin-top: 10px; font-style: italic; color: var(--text-secondary);">Message: "${e.message}"</p></div>`,icon:`warning`,showCancelButton:!0,confirmButtonColor:`var(--primary)`,cancelButtonColor:`var(--danger)`,confirmButtonText:`Yes, dispatch alert!`,background:`var(--bg-secondary)`,color:`var(--text-primary)`}).then(t=>{t.isConfirmed&&(E(T.map(t=>t.id===e.id?{...t,read:!0}:t)),Swal.fire({title:`Alert Dispatched!`,text:`Push notification successfully sent regarding client "${e.clientName||`System`}".`,icon:`success`,confirmButtonColor:`var(--primary)`,background:`var(--bg-secondary)`,color:`var(--text-primary)`}))})},he=e=>{ee([e,...k]),Fe(`scheduled appointment`,`${e.clientName} - ${e.purpose}`)},ge=e=>{ee(k.map(t=>t.id===e.id?e:t)),Fe(`updated appointment`,`${e.clientName} status to ${e.status}`)},_e=e=>{ee(k.filter(t=>t.id!==e)),Fe(`deleted appointment`,`ID: ${e}`)},ye=m===`junior`?k.filter(e=>e.clientName===c.name||P.some(t=>t.clientCoordinates?.clientName===e.clientName)):k,P=m===`junior`?y.filter(e=>e.assignedJunior===c.name):y,be=e=>{b(y.map(t=>t.id===e.id?e:t))},xe=e=>{b(y.filter(t=>t.id!==e)),Fe(`deleted a case file`,`ID: ${e}`)},we=e=>{b([e,...y]),Fe(`synced case via eCourts API`,e.cnr),E([{id:`not_`+Date.now(),type:`case_update`,title:`New Case Synced`,message:`${e.court} case synced successfully.`,time:`Just now`,read:!1},...T])},Te=e=>{S(x.map(t=>t.id===e.id?e:t))},De=e=>{S([e,...x]),Fe(`registered client contact`,e.name)},Oe=e=>{w(C.map(t=>t.id===e.id?e:t))},je=e=>{w([e,...C]),Fe(`added task checklist`,e.title)},Me=e=>{w(C.filter(t=>t.id!==e))},Fe=(e,t)=>{O([{id:`act_`+Date.now(),user:`Sarah Jenkins`,action:e,target:t,time:`Just now`},...D])},Ie=(()=>{if(!te.trim())return{cases:[],clients:[],tasks:[]};let e=te.toLowerCase();return{cases:P.filter(t=>t.title.toLowerCase().includes(e)||t.cnr.toLowerCase().includes(e)),clients:x.filter(t=>t.name.toLowerCase().includes(e)||t.company.toLowerCase().includes(e)),tasks:C.filter(t=>t.title.toLowerCase().includes(e))}})(),Le=te.trim()&&(Ie.cases.length>0||Ie.clients.length>0||Ie.tasks.length>0),F=e=>{t(e),window.innerWidth<=768&&r(!0)},Re=e=>{F(e),ne(``),j(!1)};return _jsxs(`div`,{className:`app-container`,children:[!n&&_jsx(`div`,{className:`mobile-sidebar-overlay`,onClick:()=>r(!0)}),_jsxs(`aside`,{className:`app-sidebar ${n?`collapsed`:``}`,children:[_jsxs(`div`,{className:`sidebar-header`,children:[_jsxs(`div`,{className:`brand`,children:[_jsx(`div`,{className:`brand-icon`,children:_jsx(pe,{size:18})}),_jsx(`span`,{children:`AdvocateOS`})]}),_jsx(`button`,{className:`sidebar-toggle`,onClick:()=>r(!n),children:n?_jsx(se,{size:18}):_jsx(oe,{size:18})})]}),_jsxs(`nav`,{className:`sidebar-menu`,children:[_jsxs(`button`,{className:`menu-item ${e===`dashboard`?`active`:``}`,onClick:()=>F(`dashboard`),children:[_jsx(ve,{size:18}),_jsx(`span`,{children:`Dashboard`})]}),_jsxs(`button`,{className:`menu-item ${e===`cases`?`active`:``}`,onClick:()=>F(`cases`),children:[_jsx(ie,{size:18}),_jsx(`span`,{children:`Cases (eCourts)`})]}),_jsxs(`button`,{className:`menu-item ${e===`hearings`?`active`:``}`,onClick:()=>F(`hearings`),children:[_jsx(A,{size:18}),_jsx(`span`,{children:`Hearings`})]}),_jsxs(`button`,{className:`menu-item ${e===`appearances`?`active`:``}`,onClick:()=>F(`appearances`),children:[_jsx(pe,{size:18}),_jsx(`span`,{children:`Court Appearances`})]}),_jsxs(`button`,{className:`menu-item ${e===`orders`?`active`:``}`,onClick:()=>F(`orders`),children:[_jsx(fe,{size:18}),_jsx(`span`,{children:`Orders`})]}),_jsxs(`button`,{className:`menu-item ${e===`clients`?`active`:``}`,onClick:()=>F(`clients`),children:[_jsx(ze,{size:18}),_jsx(`span`,{children:`Clients CRM`})]}),_jsxs(`button`,{className:`menu-item ${e===`appointments`?`active`:``}`,onClick:()=>F(`appointments`),children:[_jsx(M,{size:18}),_jsx(`span`,{children:`Appointments`})]}),_jsxs(`button`,{className:`menu-item ${e===`tasks`?`active`:``}`,onClick:()=>F(`tasks`),children:[_jsx(Ne,{size:18}),_jsx(`span`,{children:`Tasks`})]}),h.viewSettings&&_jsxs(`button`,{className:`menu-item ${e===`settings`?`active`:``}`,onClick:()=>F(`settings`),children:[_jsx(Ae,{size:18}),_jsx(`span`,{children:`Settings`})]})]}),_jsxs(`div`,{className:`sidebar-footer`,children:[_jsxs(`div`,{className:`org-switcher`,children:[_jsx(`div`,{className:`org-logo`,children:`U`}),_jsxs(`div`,{className:`org-info`,children:[_jsx(`span`,{className:`org-name`,children:`Universal Cases`}),_jsx(`span`,{className:`org-plan`,children:`Enterprise Tier`})]})]}),_jsxs(`div`,{className:`user-profile-summary`,children:[_jsx(`div`,{className:`user-avatar`,style:{backgroundColor:c.color||`var(--primary)`},children:c.avatar||`U`}),_jsxs(`div`,{className:`user-info`,children:[_jsx(`span`,{className:`user-name`,children:c.name||`User`}),_jsx(`span`,{className:`user-email`,style:{color:c.color||`var(--primary)`,fontWeight:`600`,fontSize:`0.68rem`},children:(u[c.role]?.label||c.role).toUpperCase()})]})]})]})]}),_jsxs(`main`,{className:`app-main`,children:[_jsxs(`header`,{className:`app-navbar`,children:[_jsxs(`div`,{className:`navbar-left`,children:[_jsx(`button`,{className:`mobile-menu-toggle`,onClick:()=>r(!n),children:_jsx(Se,{size:20})}),_jsxs(`div`,{className:`global-search-container`,children:[_jsxs(`div`,{className:`search-input-wrapper`,children:[_jsx(ke,{className:`search-icon`}),_jsx(`input`,{type:`text`,className:`global-search-input`,placeholder:`Global Search cases, records, clients, tasks...`,value:te,onChange:e=>{ne(e.target.value),j(!0)},onFocus:()=>j(!0)})]}),ae&&te.trim()&&_jsxs(Fragment,{children:[_jsx(`div`,{style:{position:`fixed`,top:0,bottom:0,left:0,right:0,zIndex:140},onClick:()=>j(!1)}),_jsxs(`div`,{className:`search-results-overlay`,children:[Ie.cases.length>0&&_jsxs(`div`,{className:`search-result-group`,children:[_jsx(`div`,{className:`search-result-group-title`,children:`Cases (eCourts)`}),Ie.cases.map(e=>_jsxs(`div`,{className:`search-result-item`,onClick:()=>Re(`cases`),children:[_jsxs(`div`,{className:`search-result-item-main`,children:[_jsx(ie,{size:14,style:{color:`var(--primary)`}}),_jsxs(`div`,{children:[_jsx(`div`,{className:`search-result-item-title`,children:e.title}),_jsx(`div`,{className:`search-result-item-subtitle`,children:e.cnr})]})]}),_jsx(`span`,{className:`search-result-item-badge badge-success`,children:e.status})]},e.id))]}),Ie.records.length>0&&_jsxs(`div`,{className:`search-result-group`,style:{borderTop:`1px solid var(--border-color)`},children:[_jsx(`div`,{className:`search-result-group-title`,children:`Records & Documents`}),Ie.records.map(e=>_jsxs(`div`,{className:`search-result-item`,onClick:()=>Re(`records`),children:[_jsxs(`div`,{className:`search-result-item-main`,children:[_jsx(N,{size:14,style:{color:`var(--info)`}}),_jsxs(`div`,{children:[_jsx(`div`,{className:`search-result-item-title`,children:e.name}),_jsx(`div`,{className:`search-result-item-subtitle`,children:e.type})]})]}),_jsx(`span`,{className:`search-result-item-badge badge-neutral`,children:e.status})]},e.id))]}),Ie.clients.length>0&&_jsxs(`div`,{className:`search-result-group`,style:{borderTop:`1px solid var(--border-color)`},children:[_jsx(`div`,{className:`search-result-group-title`,children:`Client Roster`}),Ie.clients.map(e=>_jsx(`div`,{className:`search-result-item`,onClick:()=>Re(`clients`),children:_jsxs(`div`,{className:`search-result-item-main`,children:[_jsx(ze,{size:14,style:{color:`var(--success)`}}),_jsxs(`div`,{children:[_jsx(`div`,{className:`search-result-item-title`,children:e.name}),_jsx(`div`,{className:`search-result-item-subtitle`,children:e.company})]})]})},e.id))]}),Ie.tasks.length>0&&_jsxs(`div`,{className:`search-result-group`,style:{borderTop:`1px solid var(--border-color)`},children:[_jsx(`div`,{className:`search-result-group-title`,children:`Checklists & Tasks`}),Ie.tasks.map(e=>_jsxs(`div`,{className:`search-result-item`,onClick:()=>Re(`tasks`),children:[_jsxs(`div`,{className:`search-result-item-main`,children:[_jsx(Ne,{size:14,style:{color:`var(--text-secondary)`}}),_jsxs(`div`,{children:[_jsx(`div`,{className:`search-result-item-title`,children:e.title}),_jsxs(`div`,{className:`search-result-item-subtitle`,children:[`Due: `,e.dueDate]})]})]}),_jsx(`span`,{className:`search-result-item-badge badge-warning`,children:e.status})]},e.id))]}),!Le&&_jsxs(`div`,{style:{padding:`24px`,textAlign:`center`,color:`var(--text-tertiary)`,fontSize:`0.85rem`},children:[`No matches found for "`,te,`"`]})]})]})]})]}),_jsxs(`div`,{className:`navbar-right`,children:[_jsxs(`div`,{style:{display:`flex`,alignItems:`center`,gap:`8px`,marginRight:`8px`},children:[_jsx(`span`,{style:{fontSize:`0.75rem`,fontWeight:`700`,color:`var(--text-secondary)`},children:`USER:`}),_jsx(`select`,{value:c.id,onChange:e=>{let t=o.find(t=>t.id===e.target.value);t&&l(t)},style:{padding:`6px 10px`,borderRadius:`var(--radius-md)`,border:`2px solid ${c.color||`var(--border-color)`}`,backgroundColor:`var(--bg-tertiary)`,fontSize:`0.8rem`,fontWeight:`600`,color:c.color||`var(--text-primary)`,cursor:`pointer`,outline:`none`},children:o.map(e=>_jsxs(`option`,{value:e.id,children:[e.name,` (`,u[e.role]?.label||e.role,`)`]},e.id))})]}),_jsx(`button`,{className:`btn-nav-action`,onClick:ce,title:`Toggle Light/Dark Theme`,children:i===`light`?_jsx(Ce,{size:18}):_jsx(Pe,{size:18})}),_jsx(`div`,{style:{position:`relative`},children:_jsxs(`button`,{className:`btn-nav-action`,onClick:()=>p(!0),children:[_jsx(re,{size:18}),T.some(e=>!e.read)&&_jsx(`div`,{className:`badge-dot`})]})}),h.sync&&_jsxs(`button`,{className:`btn-primary-action`,onClick:()=>t(`cases`),children:[_jsx(Ee,{size:16}),_jsx(`span`,{children:`Import Case`})]})]})]}),_jsxs(`div`,{style:{flex:1,display:`flex`,flexDirection:`column`},children:[e===`dashboard`&&_jsx(Dashboard,{records:g,cases:P,tasks:C,activities:D,appointments:ye,setView:t,currentRole:m,perms:h}),e===`cases`&&_jsx(Cases,{cases:P,onUpdateCase:be,onAddCase:we,onDeleteCase:xe,perms:h,clients:x,onUpdateClient:Te,users:o,currentUser:c}),e===`hearings`&&_jsx(HearingsCalendar,{cases:P,perms:h}),e===`appearances`&&_jsx(CourtAppearances,{cases:P,onUpdateCase:be,perms:h}),e===`orders`&&_jsx(Orders,{cases:P,onUpdateCase:be,perms:h}),e===`clients`&&_jsx(Clients,{clients:x,cases:P,records:g,onUpdateClient:Te,onAddClient:De,perms:h}),e===`tasks`&&_jsx(Tasks,{tasks:C,onUpdateTask:Oe,onAddTask:je,onDeleteTask:Me,perms:h}),e===`appointments`&&_jsx(Appointments,{appointments:ye,onAddAppointment:he,onUpdateAppointment:ge,onDeleteAppointment:_e,clients:x,perms:h}),e===`settings`&&(h.viewSettings?_jsx(Settings,{rbacMatrix:u,onUpdateRbacMatrix:le,perms:h,users:o,onUpdateUserRole:ue,onAddUser:de}):_jsxs(`div`,{className:`page-container`,style:{display:`flex`,flexDirection:`column`,alignItems:`center`,justifyContent:`center`,minHeight:`400px`,gap:`16px`},children:[_jsx(pe,{size:48,style:{color:`var(--danger)`}}),_jsx(`h2`,{style:{fontSize:`1.5rem`,fontWeight:`700`},children:`Access Restricted`}),_jsxs(`p`,{style:{color:`var(--text-secondary)`,textAlign:`center`,maxWidth:`400px`},children:[`Your current role (`,_jsx(`strong`,{children:u[m]?.label}),`) does not have settings configuration permissions.`]}),_jsx(`button`,{className:`btn-secondary`,onClick:()=>t(`dashboard`),children:`← Return to Dashboard`})]}))]})]}),f&&_jsx(`div`,{className:`side-drawer-overlay`,onClick:()=>p(!1),style:{zIndex:1e3},children:_jsxs(`div`,{className:`side-drawer`,onClick:e=>e.stopPropagation(),style:{width:`450px`,display:`flex`,flexDirection:`column`},children:[_jsxs(`div`,{className:`drawer-header`,style:{padding:`20px`,borderBottom:`1px solid var(--border-color)`,display:`flex`,justifyContent:`space-between`,alignItems:`center`},children:[_jsxs(`div`,{style:{display:`flex`,alignItems:`center`,gap:`10px`},children:[_jsx(re,{size:20,style:{color:`var(--primary)`}}),_jsx(`span`,{className:`drawer-title`,style:{fontSize:`1.1rem`,fontWeight:`700`,color:`var(--text-primary)`},children:`Client Alerts & Notifications`})]}),_jsx(`button`,{className:`btn-drawer-close`,onClick:()=>p(!1),children:_jsx(se,{size:20})})]}),_jsxs(`div`,{className:`drawer-body`,style:{padding:`20px`,display:`flex`,flexDirection:`column`,gap:`12px`,flex:1,overflowY:`auto`},children:[T.map(e=>_jsxs(`div`,{className:`notification-card`,style:{padding:`16px`,borderRadius:`var(--radius-md)`,border:`1px solid var(--border-color)`,backgroundColor:e.read?`var(--bg-secondary)`:`rgba(79, 70, 229, 0.04)`,boxShadow:`var(--shadow-sm)`},children:[_jsxs(`div`,{style:{display:`flex`,justifyContent:`space-between`,alignItems:`flex-start`,marginBottom:`8px`},children:[_jsx(`span`,{style:{fontSize:`0.85rem`,fontWeight:`700`,color:`var(--text-primary)`},children:e.title}),_jsx(`span`,{style:{fontSize:`0.7rem`,color:`var(--text-tertiary)`},children:e.time})]}),_jsx(`p`,{style:{fontSize:`0.8rem`,color:`var(--text-secondary)`,marginBottom:`12px`,lineHeight:`1.5`},children:e.message}),e.clientName&&_jsxs(`div`,{style:{display:`inline-flex`,alignItems:`center`,gap:`4px`,padding:`4px 8px`,borderRadius:`4px`,backgroundColor:`var(--primary-light)`,color:`var(--primary)`,fontSize:`0.7rem`,fontWeight:`700`,marginBottom:`12px`},children:[`Client CRM: `,e.clientName]}),_jsxs(`div`,{style:{display:`flex`,justifyContent:`flex-end`,gap:`8px`},children:[_jsx(`button`,{className:`btn-secondary`,style:{padding:`6px 10px`,fontSize:`0.75rem`},onClick:()=>E(T.map(t=>t.id===e.id?{...t,read:!0}:t)),disabled:e.read,children:e.read?`Read`:`Mark Read`}),_jsx(`button`,{className:`btn-primary-action`,style:{padding:`6px 12px`,fontSize:`0.75rem`,background:`var(--primary-gradient)`,border:`none`,color:`#fff`},onClick:()=>me(e),children:`Alert User`})]})]},e.id)),T.length===0&&_jsx(`div`,{style:{textAlign:`center`,padding:`60px 0`,color:`var(--text-tertiary)`,fontSize:`0.85rem`,fontStyle:`italic`},children:`No recent notifications.`})]})]})})]})}
+export default function App() {
+  let [e, t] = useState(`dashboard`),
+    [n, r] = useState(!1),
+    [i, a] = useState(`light`),
+    [o, s] = useState(initialUsers),
+    [c, l] = useState(initialUsers[0]),
+    [u, d] = useState(initialRbacMatrix),
+    [f, p] = useState(!1),
+    m = c.role,
+    h = u[m]?.permissions || {},
+    [g, v] = useState(initialRecords),
+    [y, b] = useState(initialCases),
+    [x, S] = useState(initialClients),
+    [C, w] = useState(initialTasks),
+    [T, E] = useState(initialNotifications),
+    [D, O] = useState(initialActivities),
+    [k, ee] = useState(initialAppointments),
+    [te, ne] = useState(``),
+    [ae, j] = useState(!1),
+    [dbInfo, setDbInfo] = useState({ connected: false, loading: true });
+
+  useEffect(() => {
+    document.documentElement.setAttribute(`data-theme`, i);
+  }, [i]);
+
+  // Load from ASP.NET Core & PostgreSQL Backend on Mount
+  useEffect(() => {
+    const loadFromBackend = async () => {
+      try {
+        const status = await api.getDbStatus();
+        setDbInfo(status);
+
+        if (status && status.connected) {
+          const [resCases, resClients, resAppts, resTasks, resRecords, resNotifs, resUsers, resRbac, resActs] =
+            await Promise.allSettled([
+              api.getCases(),
+              api.getClients(),
+              api.getAppointments(),
+              api.getTasks(),
+              api.getRecords(),
+              api.getNotifications(),
+              api.getUsers(),
+              api.getRbacMatrix(),
+              api.getActivities()
+            ]);
+
+          if (resCases.status === 'fulfilled' && resCases.value?.length) b(resCases.value);
+          if (resClients.status === 'fulfilled' && resClients.value?.length) S(resClients.value);
+          if (resAppts.status === 'fulfilled' && resAppts.value?.length) ee(resAppts.value);
+          if (resTasks.status === 'fulfilled' && resTasks.value?.length) w(resTasks.value);
+          if (resRecords.status === 'fulfilled' && resRecords.value?.length) v(resRecords.value);
+          if (resNotifs.status === 'fulfilled' && resNotifs.value?.length) E(resNotifs.value);
+          if (resUsers.status === 'fulfilled' && resUsers.value?.length) {
+            s(resUsers.value);
+            l(resUsers.value[0]);
+          }
+          if (resRbac.status === 'fulfilled' && Object.keys(resRbac.value || {}).length) d(resRbac.value);
+          if (resActs.status === 'fulfilled' && resActs.value?.length) O(resActs.value);
+        }
+      } catch (err) {
+        console.warn('Backend connection notice:', err);
+      }
+    };
+    loadFromBackend();
+  }, []);
+
+  let ce = () => {
+    a(e => (e === `light` ? `dark` : `light`));
+  },
+  le = e => {
+    d(e);
+    api.updateRbacMatrix(e).catch(err => console.error('Failed to update RBAC in DB:', err));
+  },
+  ue = (e, t) => {
+    const updatedUsers = o.map(n => (n.id === e ? { ...n, role: t } : n));
+    s(updatedUsers);
+    const targetUser = updatedUsers.find(u => u.id === e);
+    if (targetUser) {
+      api.updateUser(targetUser).catch(err => console.error('Failed to update user in DB:', err));
+    }
+    c.id === e && l(e => ({ ...e, role: t }));
+    Fe(`updated user role`, `User ID: ${e} to ${t}`);
+  },
+  de = e => {
+    s([...o, e]);
+    api.createUser(e).catch(err => console.error('Failed to create user in DB:', err));
+    Fe(`added user profile`, e.name);
+  },
+  me = e => {
+    let t = e.clientName ? `[Client CRM Profile: ${e.clientName}]` : `[System Alert]`;
+    Swal.fire({
+      title: `Dispatch Client Alert?`,
+      html: `<div style="text-align: left;"><p style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">${t}</p><p>Do you want to dispatch a critical user alert for client: <strong>"${
+        e.clientName || `System`
+      }"</strong>?</p><p style="margin-top: 10px; font-style: italic; color: var(--text-secondary);">Message: "${e.message}"</p></div>`,
+      icon: `warning`,
+      showCancelButton: !0,
+      confirmButtonColor: `var(--primary)`,
+      cancelButtonColor: `var(--danger)`,
+      confirmButtonText: `Yes, dispatch alert!`,
+      background: `var(--bg-secondary)`,
+      color: `var(--text-primary)`
+    }).then(t => {
+      if (t.isConfirmed) {
+        const updated = T.map(t => (t.id === e.id ? { ...t, read: !0 } : t));
+        E(updated);
+        api.updateNotification({ ...e, read: true }).catch(err => console.error('DB update failed:', err));
+        Swal.fire({
+          title: `Alert Dispatched!`,
+          text: `Push notification successfully sent regarding client "${e.clientName || `System`}".`,
+          icon: `success`,
+          confirmButtonColor: `var(--primary)`,
+          background: `var(--bg-secondary)`,
+          color: `var(--text-primary)`
+        });
+      }
+    });
+  },
+  he = e => {
+    ee([e, ...k]);
+    api.createAppointment(e).catch(err => console.error('Failed to save appointment in DB:', err));
+    Fe(`scheduled appointment`, `${e.clientName} - ${e.purpose}`);
+  },
+  ge = e => {
+    ee(k.map(t => (t.id === e.id ? e : t)));
+    api.updateAppointment(e).catch(err => console.error('Failed to update appointment in DB:', err));
+    Fe(`updated appointment`, `${e.clientName} status to ${e.status}`);
+  },
+  _e = e => {
+    ee(k.filter(t => t.id !== e));
+    api.deleteAppointment(e).catch(err => console.error('Failed to delete appointment in DB:', err));
+    Fe(`deleted appointment`, `ID: ${e}`);
+  },
+  ye =
+    m === `junior`
+      ? k.filter(e => e.clientName === c.name || P.some(t => t.clientCoordinates?.clientName === e.clientName))
+      : k,
+  P = m === `junior` ? y.filter(e => e.assignedJunior === c.name) : y,
+  be = e => {
+    b(y.map(t => (t.id === e.id ? e : t)));
+    api.updateCase(e).catch(err => console.error('Failed to update case in DB:', err));
+  },
+  xe = e => {
+    b(y.filter(t => t.id !== e));
+    api.deleteCase(e).catch(err => console.error('Failed to delete case in DB:', err));
+    Fe(`deleted a case file`, `ID: ${e}`);
+  },
+  we = e => {
+    b([e, ...y]);
+    api.createCase(e).catch(err => console.error('Failed to create case in DB:', err));
+    Fe(`synced case via eCourts API`, e.cnr);
+    const newNotif = {
+      id: `not_` + Date.now(),
+      type: `case_update`,
+      title: `New Case Synced`,
+      message: `${e.court} case synced successfully.`,
+      time: `Just now`,
+      read: !1
+    };
+    E([newNotif, ...T]);
+    api.createNotification(newNotif).catch(err => console.error('Failed to log notif in DB:', err));
+  },
+  Te = e => {
+    S(x.map(t => (t.id === e.id ? e : t)));
+    api.updateClient(e).catch(err => console.error('Failed to update client in DB:', err));
+  },
+  De = e => {
+    S([e, ...x]);
+    api.createClient(e).catch(err => console.error('Failed to save client in DB:', err));
+    Fe(`registered client contact`, e.name);
+  },
+  Oe = e => {
+    w(C.map(t => (t.id === e.id ? e : t)));
+    api.updateTask(e).catch(err => console.error('Failed to update task in DB:', err));
+  },
+  je = e => {
+    w([e, ...C]);
+    api.createTask(e).catch(err => console.error('Failed to add task in DB:', err));
+    Fe(`added task checklist`, e.title);
+  },
+  Me = e => {
+    w(C.filter(t => t.id !== e));
+    api.deleteTask(e).catch(err => console.error('Failed to delete task in DB:', err));
+  },
+  Fe = (e, t) => {
+    const act = { id: `act_` + Date.now(), user: c.name || `Sarah Jenkins`, action: e, target: t, time: `Just now` };
+    O([act, ...D]);
+    api.createActivity(act).catch(err => console.error('Failed to record activity in DB:', err));
+  },
+  Ie = (() => {
+    if (!te.trim()) return { cases: [], clients: [], tasks: [] };
+    let e = te.toLowerCase();
+    return {
+      cases: P.filter(t => t.title.toLowerCase().includes(e) || t.cnr.toLowerCase().includes(e)),
+      clients: x.filter(t => t.name.toLowerCase().includes(e) || t.company.toLowerCase().includes(e)),
+      tasks: C.filter(t => t.title.toLowerCase().includes(e))
+    };
+  })(),
+  Le = te.trim() && (Ie.cases.length > 0 || Ie.clients.length > 0 || Ie.tasks.length > 0),
+  F = e => {
+    t(e), window.innerWidth <= 768 && r(!0);
+  },
+  Re = e => {
+    F(e), ne(``), j(!1);
+  };
+
+  const showDbDiagnostics = () => {
+    Swal.fire({
+      title: 'PostgreSQL Database Status',
+      html: `
+        <div style="text-align: left; font-size: 0.88rem; line-height: 1.6;">
+          <div style="padding: 10px; background: ${dbInfo.connected ? '#ecfdf5' : '#fef2f2'}; border: 1px solid ${dbInfo.connected ? '#10b981' : '#ef4444'}; border-radius: 8px; margin-bottom: 12px;">
+            <strong style="color: ${dbInfo.connected ? '#047857' : '#b91c1c'};">${dbInfo.connected ? '🟢 Connected to PostgreSQL' : '🔴 Disconnected'}</strong>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <tr><td style="padding: 4px 0; color: var(--text-secondary);">Database:</td><td style="font-weight: 700; color: var(--text-primary);">${dbInfo.database || 'postgres'}</td></tr>
+            <tr><td style="padding: 4px 0; color: var(--text-secondary);">Schema:</td><td style="font-weight: 700; color: var(--primary);">${dbInfo.schema || 'AWS'}</td></tr>
+            <tr><td style="padding: 4px 0; color: var(--text-secondary);">Backend:</td><td style="font-weight: 700; color: var(--text-primary);">ASP.NET Core 8 (C#)</td></tr>
+            <tr><td style="padding: 4px 0; color: var(--text-secondary);">Endpoint:</td><td style="font-family: monospace; font-size: 0.8rem; color: var(--text-primary);">http://localhost:5052/api</td></tr>
+            <tr><td style="padding: 4px 0; color: var(--text-secondary);">PostgreSQL Server:</td><td style="font-size: 0.75rem; color: var(--text-secondary);">${dbInfo.serverVersion ? dbInfo.serverVersion.split(',')[0] : 'v17.10'}</td></tr>
+            ${
+              dbInfo.counts
+                ? `
+            <tr><td colspan="2" style="padding-top: 10px; font-weight: 700; border-top: 1px solid var(--border-color);">Database Records:</td></tr>
+            <tr><td style="color: var(--text-secondary);">Cases:</td><td style="font-weight: 600;">${dbInfo.counts.cases} dossiers</td></tr>
+            <tr><td style="color: var(--text-secondary);">Clients CRM:</td><td style="font-weight: 600;">${dbInfo.counts.clients} contacts</td></tr>
+            <tr><td style="color: var(--text-secondary);">Appointments:</td><td style="font-weight: 600;">${dbInfo.counts.appointments} entries</td></tr>
+            <tr><td style="color: var(--text-secondary);">Tasks:</td><td style="font-weight: 600;">${dbInfo.counts.tasks} items</td></tr>
+            <tr><td style="color: var(--text-secondary);">Users:</td><td style="font-weight: 600;">${dbInfo.counts.users} advocates</td></tr>
+            `
+                : ''
+            }
+          </table>
+        </div>
+      `,
+      confirmButtonText: 'OK',
+      confirmButtonColor: 'var(--primary)',
+      background: 'var(--bg-secondary)',
+      color: 'var(--text-primary)'
+    });
+  };
+
+  return _jsxs(`div`, {
+    className: `app-container`,
+    children: [
+      !n && _jsx(`div`, { className: `mobile-sidebar-overlay`, onClick: () => r(!0) }),
+      _jsxs(`aside`, {
+        className: `app-sidebar ${n ? `collapsed` : ``}`,
+        children: [
+          _jsxs(`div`, {
+            className: `sidebar-header`,
+            children: [
+              _jsxs(`div`, {
+                className: `brand`,
+                children: [
+                  _jsx(`div`, { className: `brand-icon`, children: _jsx(pe, { size: 18 }) }),
+                  _jsx(`span`, { children: `AdvocateOS` })
+                ]
+              }),
+              _jsx(`button`, {
+                className: `sidebar-toggle`,
+                onClick: () => r(!n),
+                children: n ? _jsx(se, { size: 18 }) : _jsx(oe, { size: 18 })
+              })
+            ]
+          }),
+          _jsxs(`nav`, {
+            className: `sidebar-menu`,
+            children: [
+              _jsxs(`button`, {
+                className: `menu-item ${e === `dashboard` ? `active` : ``}`,
+                onClick: () => F(`dashboard`),
+                children: [_jsx(ve, { size: 18 }), _jsx(`span`, { children: `Dashboard` })]
+              }),
+              _jsxs(`button`, {
+                className: `menu-item ${e === `cases` ? `active` : ``}`,
+                onClick: () => F(`cases`),
+                children: [_jsx(ie, { size: 18 }), _jsx(`span`, { children: `Cases (eCourts)` })]
+              }),
+              _jsxs(`button`, {
+                className: `menu-item ${e === `hearings` ? `active` : ``}`,
+                onClick: () => F(`hearings`),
+                children: [_jsx(A, { size: 18 }), _jsx(`span`, { children: `Hearings` })]
+              }),
+              _jsxs(`button`, {
+                className: `menu-item ${e === `appearances` ? `active` : ``}`,
+                onClick: () => F(`appearances`),
+                children: [_jsx(pe, { size: 18 }), _jsx(`span`, { children: `Court Appearances` })]
+              }),
+              _jsxs(`button`, {
+                className: `menu-item ${e === `orders` ? `active` : ``}`,
+                onClick: () => F(`orders`),
+                children: [_jsx(fe, { size: 18 }), _jsx(`span`, { children: `Orders` })]
+              }),
+              _jsxs(`button`, {
+                className: `menu-item ${e === `clients` ? `active` : ``}`,
+                onClick: () => F(`clients`),
+                children: [_jsx(ze, { size: 18 }), _jsx(`span`, { children: `Clients CRM` })]
+              }),
+              _jsxs(`button`, {
+                className: `menu-item ${e === `appointments` ? `active` : ``}`,
+                onClick: () => F(`appointments`),
+                children: [_jsx(M, { size: 18 }), _jsx(`span`, { children: `Appointments` })]
+              }),
+              _jsxs(`button`, {
+                className: `menu-item ${e === `tasks` ? `active` : ``}`,
+                onClick: () => F(`tasks`),
+                children: [_jsx(Ne, { size: 18 }), _jsx(`span`, { children: `Tasks` })]
+              }),
+              h.viewSettings &&
+                _jsxs(`button`, {
+                  className: `menu-item ${e === `settings` ? `active` : ``}`,
+                  onClick: () => F(`settings`),
+                  children: [_jsx(Ae, { size: 18 }), _jsx(`span`, { children: `Settings` })]
+                })
+            ]
+          }),
+          _jsxs(`div`, {
+            className: `sidebar-footer`,
+            children: [
+              _jsxs(`div`, {
+                className: `org-switcher`,
+                children: [
+                  _jsx(`div`, { className: `org-logo`, children: `U` }),
+                  _jsxs(`div`, {
+                    className: `org-info`,
+                    children: [
+                      _jsx(`span`, { className: `org-name`, children: `Universal Cases` }),
+                      _jsx(`span`, { className: `org-plan`, children: `Enterprise Tier` })
+                    ]
+                  })
+                ]
+              }),
+              _jsxs(`div`, {
+                className: `user-profile-summary`,
+                children: [
+                  _jsx(`div`, {
+                    className: `user-avatar`,
+                    style: { backgroundColor: c.color || `var(--primary)` },
+                    children: c.avatar || `U`
+                  }),
+                  _jsxs(`div`, {
+                    className: `user-info`,
+                    children: [
+                      _jsx(`span`, { className: `user-name`, children: c.name || `User` }),
+                      _jsx(`span`, {
+                        className: `user-email`,
+                        style: { color: c.color || `var(--primary)`, fontWeight: `600`, fontSize: `0.68rem` },
+                        children: (u[c.role]?.label || c.role).toUpperCase()
+                      })
+                    ]
+                  })
+                ]
+              })
+            ]
+          })
+        ]
+      }),
+      _jsxs(`main`, {
+        className: `app-main`,
+        children: [
+          _jsxs(`header`, {
+            className: `app-navbar`,
+            children: [
+              _jsxs(`div`, {
+                className: `navbar-left`,
+                children: [
+                  _jsx(`button`, {
+                    className: `mobile-menu-toggle`,
+                    onClick: () => r(!n),
+                    children: _jsx(Se, { size: 20 })
+                  }),
+                  _jsxs(`div`, {
+                    className: `global-search-container`,
+                    children: [
+                      _jsxs(`div`, {
+                        className: `search-input-wrapper`,
+                        children: [
+                          _jsx(ke, { className: `search-icon` }),
+                          _jsx(`input`, {
+                            type: `text`,
+                            className: `global-search-input`,
+                            placeholder: `Global Search cases, records, clients, tasks...`,
+                            value: te,
+                            onChange: e => {
+                              ne(e.target.value), j(!0);
+                            },
+                            onFocus: () => j(!0)
+                          })
+                        ]
+                      }),
+                      ae &&
+                        te.trim() &&
+                        _jsxs(Fragment, {
+                          children: [
+                            _jsx(`div`, {
+                              style: { position: `fixed`, top: 0, bottom: 0, left: 0, right: 0, zIndex: 140 },
+                              onClick: () => j(!1)
+                            }),
+                            _jsxs(`div`, {
+                              className: `search-results-overlay`,
+                              children: [
+                                Ie.cases.length > 0 &&
+                                  _jsxs(`div`, {
+                                    className: `search-result-group`,
+                                    children: [
+                                      _jsx(`div`, {
+                                        className: `search-result-group-title`,
+                                        children: `Cases (eCourts)`
+                                      }),
+                                      Ie.cases.map(e =>
+                                        _jsxs(
+                                          `div`,
+                                          {
+                                            className: `search-result-item`,
+                                            onClick: () => Re(`cases`),
+                                            children: [
+                                              _jsxs(`div`, {
+                                                className: `search-result-item-main`,
+                                                children: [
+                                                  _jsx(ie, { size: 14, style: { color: `var(--primary)` } }),
+                                                  _jsxs(`div`, {
+                                                    children: [
+                                                      _jsx(`div`, {
+                                                        className: `search-result-item-title`,
+                                                        children: e.title
+                                                      }),
+                                                      _jsx(`div`, {
+                                                        className: `search-result-item-subtitle`,
+                                                        children: e.cnr
+                                                      })
+                                                    ]
+                                                  })
+                                                ]
+                                              }),
+                                              _jsx(`span`, {
+                                                className: `search-result-item-badge badge-success`,
+                                                children: e.status
+                                              })
+                                            ]
+                                          },
+                                          e.id
+                                        )
+                                      )
+                                    ]
+                                  }),
+                                Ie.records.length > 0 &&
+                                  _jsxs(`div`, {
+                                    className: `search-result-group`,
+                                    style: { borderTop: `1px solid var(--border-color)` },
+                                    children: [
+                                      _jsx(`div`, {
+                                        className: `search-result-group-title`,
+                                        children: `Records & Documents`
+                                      }),
+                                      Ie.records.map(e =>
+                                        _jsxs(
+                                          `div`,
+                                          {
+                                            className: `search-result-item`,
+                                            onClick: () => Re(`records`),
+                                            children: [
+                                              _jsxs(`div`, {
+                                                className: `search-result-item-main`,
+                                                children: [
+                                                  _jsx(N, { size: 14, style: { color: `var(--info)` } }),
+                                                  _jsxs(`div`, {
+                                                    children: [
+                                                      _jsx(`div`, {
+                                                        className: `search-result-item-title`,
+                                                        children: e.name
+                                                      }),
+                                                      _jsx(`div`, {
+                                                        className: `search-result-item-subtitle`,
+                                                        children: e.type
+                                                      })
+                                                    ]
+                                                  })
+                                                ]
+                                              }),
+                                              _jsx(`span`, {
+                                                className: `search-result-item-badge badge-neutral`,
+                                                children: e.status
+                                              })
+                                            ]
+                                          },
+                                          e.id
+                                        )
+                                      )
+                                    ]
+                                  }),
+                                Ie.clients.length > 0 &&
+                                  _jsxs(`div`, {
+                                    className: `search-result-group`,
+                                    style: { borderTop: `1px solid var(--border-color)` },
+                                    children: [
+                                      _jsx(`div`, { className: `search-result-group-title`, children: `Client Roster` }),
+                                      Ie.clients.map(e =>
+                                        _jsx(
+                                          `div`,
+                                          {
+                                            className: `search-result-item`,
+                                            onClick: () => Re(`clients`),
+                                            children: _jsxs(`div`, {
+                                              className: `search-result-item-main`,
+                                              children: [
+                                                _jsx(ze, { size: 14, style: { color: `var(--success)` } }),
+                                                _jsxs(`div`, {
+                                                  children: [
+                                                    _jsx(`div`, {
+                                                      className: `search-result-item-title`,
+                                                      children: e.name
+                                                    }),
+                                                    _jsx(`div`, {
+                                                      className: `search-result-item-subtitle`,
+                                                      children: e.company
+                                                    })
+                                                  ]
+                                                })
+                                              ]
+                                            })
+                                          },
+                                          e.id
+                                        )
+                                      )
+                                    ]
+                                  }),
+                                Ie.tasks.length > 0 &&
+                                  _jsxs(`div`, {
+                                    className: `search-result-group`,
+                                    style: { borderTop: `1px solid var(--border-color)` },
+                                    children: [
+                                      _jsx(`div`, {
+                                        className: `search-result-group-title`,
+                                        children: `Checklists & Tasks`
+                                      }),
+                                      Ie.tasks.map(e =>
+                                        _jsxs(
+                                          `div`,
+                                          {
+                                            className: `search-result-item`,
+                                            onClick: () => Re(`tasks`),
+                                            children: [
+                                              _jsxs(`div`, {
+                                                className: `search-result-item-main`,
+                                                children: [
+                                                  _jsx(Ne, { size: 14, style: { color: `var(--text-secondary)` } }),
+                                                  _jsxs(`div`, {
+                                                    children: [
+                                                      _jsx(`div`, {
+                                                        className: `search-result-item-title`,
+                                                        children: e.title
+                                                      }),
+                                                      _jsxs(`div`, {
+                                                        className: `search-result-item-subtitle`,
+                                                        children: [`Due: `, e.dueDate]
+                                                      })
+                                                    ]
+                                                  })
+                                                ]
+                                              }),
+                                              _jsx(`span`, {
+                                                className: `search-result-item-badge badge-warning`,
+                                                children: e.status
+                                              })
+                                            ]
+                                          },
+                                          e.id
+                                        )
+                                      )
+                                    ]
+                                  }),
+                                !Le &&
+                                  _jsxs(`div`, {
+                                    style: {
+                                      padding: `24px`,
+                                      textAlign: `center`,
+                                      color: `var(--text-tertiary)`,
+                                      fontSize: `0.85rem`
+                                    },
+                                    children: [`No matches found for "`, te, `"`]
+                                  })
+                              ]
+                            })
+                          ]
+                        })
+                    ]
+                  })
+                ]
+              }),
+              _jsxs(`div`, {
+                className: `navbar-right`,
+                children: [
+                  // Live PostgreSQL / Backend connection status pill
+                  _jsxs(`div`, {
+                    onClick: showDbDiagnostics,
+                    style: {
+                      display: `flex`,
+                      alignItems: `center`,
+                      gap: `6px`,
+                      padding: `5px 10px`,
+                      borderRadius: `20px`,
+                      backgroundColor: dbInfo.connected ? `rgba(16, 185, 129, 0.1)` : `rgba(239, 68, 68, 0.1)`,
+                      border: `1px solid ${dbInfo.connected ? `rgba(16, 185, 129, 0.3)` : `rgba(239, 68, 68, 0.3)`}`,
+                      fontSize: `0.72rem`,
+                      fontWeight: `700`,
+                      color: dbInfo.connected ? `#10b981` : `#ef4444`,
+                      cursor: `pointer`,
+                      transition: `all 0.2s ease`
+                    },
+                    title: `PostgreSQL connection: Click for DB diagnostics`,
+                    children: [
+                      _jsx(N, { size: 13, style: { color: dbInfo.connected ? `#10b981` : `#ef4444` } }),
+                      _jsx(`span`, {
+                        style: {
+                          width: `6px`,
+                          height: `6px`,
+                          borderRadius: `50%`,
+                          backgroundColor: dbInfo.connected ? `#10b981` : `#ef4444`,
+                          boxShadow: dbInfo.connected ? `0 0 6px #10b981` : `none`
+                        }
+                      }),
+                      _jsx(`span`, {
+                        children: dbInfo.connected ? `PostgreSQL (AWS)` : `DB Offline`
+                      })
+                    ]
+                  }),
+                  _jsxs(`div`, {
+                    style: { display: `flex`, alignItems: `center`, gap: `8px`, marginRight: `8px` },
+                    children: [
+                      _jsx(`span`, {
+                        style: { fontSize: `0.75rem`, fontWeight: `700`, color: `var(--text-secondary)` },
+                        children: `USER:`
+                      }),
+                      _jsx(`select`, {
+                        value: c.id,
+                        onChange: e => {
+                          let t = o.find(t => t.id === e.target.value);
+                          t && l(t);
+                        },
+                        style: {
+                          padding: `6px 10px`,
+                          borderRadius: `var(--radius-md)`,
+                          border: `2px solid ${c.color || `var(--border-color)`}`,
+                          backgroundColor: `var(--bg-tertiary)`,
+                          fontSize: `0.8rem`,
+                          fontWeight: `600`,
+                          color: c.color || `var(--text-primary)`,
+                          cursor: `pointer`,
+                          outline: `none`
+                        },
+                        children: o.map(e =>
+                          _jsxs(`option`, { value: e.id, children: [e.name, ` (`, u[e.role]?.label || e.role, `)`] }, e.id)
+                        )
+                      })
+                    ]
+                  }),
+                  _jsx(`button`, {
+                    className: `btn-nav-action`,
+                    onClick: ce,
+                    title: `Toggle Light/Dark Theme`,
+                    children: i === `light` ? _jsx(Ce, { size: 18 }) : _jsx(Pe, { size: 18 })
+                  }),
+                  _jsx(`div`, {
+                    style: { position: `relative` },
+                    children: _jsxs(`button`, {
+                      className: `btn-nav-action`,
+                      onClick: () => p(!0),
+                      children: [_jsx(re, { size: 18 }), T.some(e => !e.read) && _jsx(`div`, { className: `badge-dot` })]
+                    })
+                  }),
+                  h.sync &&
+                    _jsxs(`button`, {
+                      className: `btn-primary-action`,
+                      onClick: () => t(`cases`),
+                      children: [_jsx(Ee, { size: 16 }), _jsx(`span`, { children: `Import Case` })]
+                    })
+                ]
+              })
+            ]
+          }),
+          _jsxs(`div`, {
+            style: { flex: 1, display: `flex`, flexDirection: `column` },
+            children: [
+              e === `dashboard` &&
+                _jsx(Dashboard, {
+                  records: g,
+                  cases: P,
+                  tasks: C,
+                  activities: D,
+                  appointments: ye,
+                  setView: t,
+                  currentRole: m,
+                  perms: h
+                }),
+              e === `cases` &&
+                _jsx(Cases, {
+                  cases: P,
+                  onUpdateCase: be,
+                  onAddCase: we,
+                  onDeleteCase: xe,
+                  perms: h,
+                  clients: x,
+                  onUpdateClient: Te,
+                  users: o,
+                  currentUser: c
+                }),
+              e === `hearings` && _jsx(HearingsCalendar, { cases: P, perms: h }),
+              e === `appearances` && _jsx(CourtAppearances, { cases: P, onUpdateCase: be, perms: h }),
+              e === `orders` && _jsx(Orders, { cases: P, onUpdateCase: be, perms: h }),
+              e === `clients` &&
+                _jsx(Clients, {
+                  clients: x,
+                  cases: P,
+                  records: g,
+                  onUpdateClient: Te,
+                  onAddClient: De,
+                  perms: h
+                }),
+              e === `tasks` &&
+                _jsx(Tasks, {
+                  tasks: C,
+                  onUpdateTask: Oe,
+                  onAddTask: je,
+                  onDeleteTask: Me,
+                  perms: h
+                }),
+              e === `appointments` &&
+                _jsx(Appointments, {
+                  appointments: ye,
+                  onAddAppointment: he,
+                  onUpdateAppointment: ge,
+                  onDeleteAppointment: _e,
+                  clients: x,
+                  perms: h
+                }),
+              e === `settings` &&
+                (h.viewSettings
+                  ? _jsx(Settings, {
+                      rbacMatrix: u,
+                      onUpdateRbacMatrix: le,
+                      perms: h,
+                      users: o,
+                      onUpdateUserRole: ue,
+                      onAddUser: de
+                    })
+                  : _jsxs(`div`, {
+                      className: `page-container`,
+                      style: {
+                        display: `flex`,
+                        flexDirection: `column`,
+                        alignItems: `center`,
+                        justifyContent: `center`,
+                        minHeight: `400px`,
+                        gap: `16px`
+                      },
+                      children: [
+                        _jsx(pe, { size: 48, style: { color: `var(--danger)` } }),
+                        _jsx(`h2`, { style: { fontSize: `1.5rem`, fontWeight: `700` }, children: `Access Restricted` }),
+                        _jsxs(`p`, {
+                          style: { color: `var(--text-secondary)`, textAlign: `center`, maxWidth: `400px` },
+                          children: [
+                            `Your current role (`,
+                            _jsx(`strong`, { children: u[m]?.label }),
+                            `) does not have settings configuration permissions.`
+                          ]
+                        }),
+                        _jsx(`button`, {
+                          className: `btn-secondary`,
+                          onClick: () => t(`dashboard`),
+                          children: `← Return to Dashboard`
+                        })
+                      ]
+                    }))
+            ]
+          })
+        ]
+      }),
+      f &&
+        _jsx(`div`, {
+          className: `side-drawer-overlay`,
+          onClick: () => p(!1),
+          style: { zIndex: 1e3 },
+          children: _jsxs(`div`, {
+            className: `side-drawer`,
+            onClick: e => e.stopPropagation(),
+            style: { width: `450px`, display: `flex`, flexDirection: `column` },
+            children: [
+              _jsxs(`div`, {
+                className: `drawer-header`,
+                style: {
+                  padding: `20px`,
+                  borderBottom: `1px solid var(--border-color)`,
+                  display: `flex`,
+                  justifyContent: `space-between`,
+                  alignItems: `center`
+                },
+                children: [
+                  _jsxs(`div`, {
+                    style: { display: `flex`, alignItems: `center`, gap: `10px` },
+                    children: [
+                      _jsx(re, { size: 20, style: { color: `var(--primary)` } }),
+                      _jsx(`span`, {
+                        className: `drawer-title`,
+                        style: { fontSize: `1.1rem`, fontWeight: `700`, color: `var(--text-primary)` },
+                        children: `Client Alerts & Notifications`
+                      })
+                    ]
+                  }),
+                  _jsx(`button`, { className: `btn-drawer-close`, onClick: () => p(!1), children: _jsx(se, { size: 20 }) })
+                ]
+              }),
+              _jsxs(`div`, {
+                className: `drawer-body`,
+                style: {
+                  padding: `20px`,
+                  display: `flex`,
+                  flexDirection: `column`,
+                  gap: `12px`,
+                  flex: 1,
+                  overflowY: `auto`
+                },
+                children: [
+                  T.map(e =>
+                    _jsxs(
+                      `div`,
+                      {
+                        className: `notification-card`,
+                        style: {
+                          padding: `16px`,
+                          borderRadius: `var(--radius-md)`,
+                          border: `1px solid var(--border-color)`,
+                          backgroundColor: e.read ? `var(--bg-secondary)` : `rgba(79, 70, 229, 0.04)`,
+                          boxShadow: `var(--shadow-sm)`
+                        },
+                        children: [
+                          _jsxs(`div`, {
+                            style: {
+                              display: `flex`,
+                              justifyContent: `space-between`,
+                              alignItems: `flex-start`,
+                              marginBottom: `8px`
+                            },
+                            children: [
+                              _jsx(`span`, {
+                                style: { fontSize: `0.85rem`, fontWeight: `700`, color: `var(--text-primary)` },
+                                children: e.title
+                              }),
+                              _jsx(`span`, {
+                                style: { fontSize: `0.7rem`, color: `var(--text-tertiary)` },
+                                children: e.time
+                              })
+                            ]
+                          }),
+                          _jsx(`p`, {
+                            style: {
+                              fontSize: `0.8rem`,
+                              color: `var(--text-secondary)`,
+                              marginBottom: `12px`,
+                              lineHeight: `1.5`
+                            },
+                            children: e.message
+                          }),
+                          e.clientName &&
+                            _jsxs(`div`, {
+                              style: {
+                                display: `inline-flex`,
+                                alignItems: `center`,
+                                gap: `4px`,
+                                padding: `4px 8px`,
+                                borderRadius: `4px`,
+                                backgroundColor: `var(--primary-light)`,
+                                color: `var(--primary)`,
+                                fontSize: `0.7rem`,
+                                fontWeight: `700`,
+                                marginBottom: `12px`
+                              },
+                              children: [`Client CRM: `, e.clientName]
+                            }),
+                          _jsxs(`div`, {
+                            style: { display: `flex`, justifyContent: `flex-end`, gap: `8px` },
+                            children: [
+                              _jsx(`button`, {
+                                className: `btn-secondary`,
+                                style: { padding: `6px 10px`, fontSize: `0.75rem` },
+                                onClick: () => {
+                                  E(T.map(t => (t.id === e.id ? { ...t, read: !0 } : t)));
+                                  api.updateNotification({ ...e, read: true }).catch(err =>
+                                    console.error('Failed to mark read in DB:', err)
+                                  );
+                                },
+                                disabled: e.read,
+                                children: e.read ? `Read` : `Mark Read`
+                              }),
+                              _jsx(`button`, {
+                                className: `btn-primary-action`,
+                                style: {
+                                  padding: `6px 12px`,
+                                  fontSize: `0.75rem`,
+                                  background: `var(--primary-gradient)`,
+                                  border: `none`,
+                                  color: `#fff`
+                                },
+                                onClick: () => me(e),
+                                children: `Alert User`
+                              })
+                            ]
+                          })
+                        ]
+                      },
+                      e.id
+                    )
+                  ),
+                  T.length === 0 &&
+                    _jsx(`div`, {
+                      style: {
+                        textAlign: `center`,
+                        padding: `60px 0`,
+                        color: `var(--text-tertiary)`,
+                        fontSize: `0.85rem`,
+                        fontStyle: `italic`
+                      },
+                      children: `No recent notifications.`
+                    })
+                ]
+              })
+            ]
+          })
+        })
+    ]
+  });
+}
