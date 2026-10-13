@@ -152,8 +152,15 @@ export default function App() {
 
   let ce = () => {
     a(e => (e === `light` ? `dark` : `light`));
-  },
-  le = e => {
+  };
+
+  const refreshDbCounts = () => {
+    api.getDbStatus().then(st => {
+      if (st && st.connected) setDbInfo(st);
+    }).catch(() => {});
+  };
+
+  let le = e => {
     d(e);
     api.updateRbacMatrix(e).catch(err => console.error('Failed to update RBAC in DB:', err));
   },
@@ -162,14 +169,14 @@ export default function App() {
     s(updatedUsers);
     const targetUser = updatedUsers.find(u => u.id === e);
     if (targetUser) {
-      api.updateUser(targetUser).catch(err => console.error('Failed to update user in DB:', err));
+      api.updateUser(targetUser).then(refreshDbCounts).catch(err => console.error('Failed to update user in DB:', err));
     }
     c.id === e && l(e => ({ ...e, role: t }));
     Fe(`updated user role`, `User ID: ${e} to ${t}`);
   },
   de = e => {
     s([...o, e]);
-    api.createUser(e).catch(err => console.error('Failed to create user in DB:', err));
+    api.createUser(e).then(refreshDbCounts).catch(err => console.error('Failed to create user in DB:', err));
     Fe(`added user profile`, e.name);
   },
   me = e => {
@@ -204,17 +211,17 @@ export default function App() {
   },
   he = e => {
     ee([e, ...k]);
-    api.createAppointment(e).catch(err => console.error('Failed to save appointment in DB:', err));
+    api.createAppointment(e).then(refreshDbCounts).catch(err => console.error('Failed to save appointment in DB:', err));
     Fe(`scheduled appointment`, `${e.clientName} - ${e.purpose}`);
   },
   ge = e => {
     ee(k.map(t => (t.id === e.id ? e : t)));
-    api.updateAppointment(e).catch(err => console.error('Failed to update appointment in DB:', err));
+    api.updateAppointment(e).then(refreshDbCounts).catch(err => console.error('Failed to update appointment in DB:', err));
     Fe(`updated appointment`, `${e.clientName} status to ${e.status}`);
   },
   _e = e => {
     ee(k.filter(t => t.id !== e));
-    api.deleteAppointment(e).catch(err => console.error('Failed to delete appointment in DB:', err));
+    api.deleteAppointment(e).then(refreshDbCounts).catch(err => console.error('Failed to delete appointment in DB:', err));
     Fe(`deleted appointment`, `ID: ${e}`);
   },
   ye =
@@ -224,7 +231,7 @@ export default function App() {
   P = m === `junior` ? y.filter(e => e.assignedJunior === c.name) : y,
   be = e => {
     b(y.map(t => (t.id === e.id ? e : t)));
-    api.updateCase(e).catch(err => console.error('Failed to update case in DB:', err));
+    api.updateCase(e).then(refreshDbCounts).catch(err => console.error('Failed to update case in DB:', err));
   },
   xe = async e => {
     try {
@@ -239,10 +246,7 @@ export default function App() {
           return c;
         })
       );
-      // Refresh DB counts
-      api.getDbStatus().then(st => {
-        if (st && st.connected) setDbInfo(st);
-      }).catch(() => {});
+      refreshDbCounts();
     } catch (err) {
       console.error('Failed to delete case in DB:', err);
       throw err;
@@ -250,7 +254,7 @@ export default function App() {
   },
   we = e => {
     b([e, ...y]);
-    api.createCase(e).catch(err => console.error('Failed to create case in DB:', err));
+    api.createCase(e).then(refreshDbCounts).catch(err => console.error('Failed to create case in DB:', err));
     Fe(`synced case via eCourts API`, e.cnr);
     const newNotif = {
       id: `not_` + Date.now(),
@@ -265,25 +269,35 @@ export default function App() {
   },
   Te = e => {
     S(x.map(t => (t.id === e.id ? e : t)));
-    api.updateClient(e).catch(err => console.error('Failed to update client in DB:', err));
+    api.updateClient(e).then(refreshDbCounts).catch(err => console.error('Failed to update client in DB:', err));
   },
   De = e => {
     S([e, ...x]);
-    api.createClient(e).catch(err => console.error('Failed to save client in DB:', err));
+    api.createClient(e).then(refreshDbCounts).catch(err => console.error('Failed to save client in DB:', err));
     Fe(`registered client contact`, e.name);
+  },
+  deleteClientHandler = async id => {
+    try {
+      await api.deleteClient(id);
+      S(prev => prev.filter(t => t.id !== id));
+      Fe(`deleted client contact`, `ID: ${id}`);
+      refreshDbCounts();
+    } catch (err) {
+      console.error('Failed to delete client in DB:', err);
+    }
   },
   Oe = e => {
     w(C.map(t => (t.id === e.id ? e : t)));
-    api.updateTask(e).catch(err => console.error('Failed to update task in DB:', err));
+    api.updateTask(e).then(refreshDbCounts).catch(err => console.error('Failed to update task in DB:', err));
   },
   je = e => {
     w([e, ...C]);
-    api.createTask(e).catch(err => console.error('Failed to add task in DB:', err));
+    api.createTask(e).then(refreshDbCounts).catch(err => console.error('Failed to add task in DB:', err));
     Fe(`added task checklist`, e.title);
   },
   Me = e => {
     w(C.filter(t => t.id !== e));
-    api.deleteTask(e).catch(err => console.error('Failed to delete task in DB:', err));
+    api.deleteTask(e).then(refreshDbCounts).catch(err => console.error('Failed to delete task in DB:', err));
   },
   Fe = (e, t) => {
     const act = { id: `act_` + Date.now(), user: c.name || `Sarah Jenkins`, action: e, target: t, time: `Just now` };
@@ -818,6 +832,7 @@ export default function App() {
                   records: g,
                   onUpdateClient: Te,
                   onAddClient: De,
+                  onDeleteClient: deleteClientHandler,
                   perms: h
                 }),
               e === `tasks` &&

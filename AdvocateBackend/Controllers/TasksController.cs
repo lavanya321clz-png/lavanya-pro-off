@@ -38,6 +38,11 @@ public class TasksController : ControllerBase
             item.Id = "tsk_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
+        if (string.IsNullOrWhiteSpace(item.AssignedUser) && !string.IsNullOrWhiteSpace(item.AssignedTo))
+            item.AssignedUser = item.AssignedTo;
+        else if (string.IsNullOrWhiteSpace(item.AssignedTo) && !string.IsNullOrWhiteSpace(item.AssignedUser))
+            item.AssignedTo = item.AssignedUser;
+
         _context.Tasks.Add(item);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetTask), new { id = item.Id }, item);
@@ -51,6 +56,11 @@ public class TasksController : ControllerBase
             item.Id = id;
         }
 
+        if (string.IsNullOrWhiteSpace(item.AssignedUser) && !string.IsNullOrWhiteSpace(item.AssignedTo))
+            item.AssignedUser = item.AssignedTo;
+        else if (string.IsNullOrWhiteSpace(item.AssignedTo) && !string.IsNullOrWhiteSpace(item.AssignedUser))
+            item.AssignedTo = item.AssignedUser;
+
         var existing = await _context.Tasks.FindAsync(id);
         if (existing == null)
         {
@@ -59,6 +69,8 @@ public class TasksController : ControllerBase
         else
         {
             _context.Entry(existing).CurrentValues.SetValues(item);
+            existing.AssignedUser = item.AssignedUser;
+            existing.AssignedTo = item.AssignedTo ?? "";
         }
 
         await _context.SaveChangesAsync();

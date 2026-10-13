@@ -60,6 +60,9 @@ public class ClientsController : ControllerBase
         {
             _context.Entry(existing).CurrentValues.SetValues(item);
             existing.LinkedCases = item.LinkedCases;
+            existing.LinkedRecords = item.LinkedRecords;
+            existing.Notes = item.Notes;
+            existing.Documents = item.Documents;
         }
 
         await _context.SaveChangesAsync();

@@ -38,6 +38,11 @@ public class AppointmentsController : ControllerBase
             item.Id = "appt_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
+        if (string.IsNullOrWhiteSpace(item.Venue) && !string.IsNullOrWhiteSpace(item.Location))
+            item.Venue = item.Location;
+        else if (string.IsNullOrWhiteSpace(item.Location) && !string.IsNullOrWhiteSpace(item.Venue))
+            item.Location = item.Venue;
+
         _context.Appointments.Add(item);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetAppointment), new { id = item.Id }, item);
@@ -50,6 +55,11 @@ public class AppointmentsController : ControllerBase
         {
             item.Id = id;
         }
+
+        if (string.IsNullOrWhiteSpace(item.Venue) && !string.IsNullOrWhiteSpace(item.Location))
+            item.Venue = item.Location;
+        else if (string.IsNullOrWhiteSpace(item.Location) && !string.IsNullOrWhiteSpace(item.Venue))
+            item.Location = item.Venue;
 
         var existing = await _context.Appointments.FindAsync(id);
         if (existing == null)

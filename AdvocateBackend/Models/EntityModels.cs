@@ -63,6 +63,7 @@ public class AppointmentItem
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public string? Venue { get; set; }
+    public string? Location { get; set; }
     public string? VideoPlatform { get; set; }
     public string? VideoLink { get; set; }
     public string? Phone { get; set; }
@@ -76,6 +77,7 @@ public class TaskItem
     public string Priority { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string AssignedTo { get; set; } = string.Empty;
+    public string? AssignedUser { get; set; }
     public string? CaseId { get; set; }
     public bool Completed { get; set; }
 }

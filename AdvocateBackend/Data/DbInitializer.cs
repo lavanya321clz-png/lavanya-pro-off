@@ -40,6 +40,36 @@ public static class DbInitializer
                 }
                 logger.LogInformation("Tables created successfully in AWS schema.");
             }
+            else
+            {
+                // Ensure all columns exist for existing tables
+                var migrationScript = @"
+                    ALTER TABLE ""AWS"".""Tasks"" ADD COLUMN IF NOT EXISTS ""AssignedUser"" text;
+                    ALTER TABLE ""AWS"".""Tasks"" ADD COLUMN IF NOT EXISTS ""CaseId"" text;
+                    ALTER TABLE ""AWS"".""Appointments"" ADD COLUMN IF NOT EXISTS ""Location"" text;
+                    ALTER TABLE ""AWS"".""Appointments"" ADD COLUMN IF NOT EXISTS ""Venue"" text;
+                    ALTER TABLE ""AWS"".""Appointments"" ADD COLUMN IF NOT EXISTS ""Company"" text;
+                    ALTER TABLE ""AWS"".""Appointments"" ADD COLUMN IF NOT EXISTS ""VideoPlatform"" text;
+                    ALTER TABLE ""AWS"".""Appointments"" ADD COLUMN IF NOT EXISTS ""VideoLink"" text;
+                    ALTER TABLE ""AWS"".""Appointments"" ADD COLUMN IF NOT EXISTS ""Phone"" text;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""Avatar"" text;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""Address"" text;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""Status"" text;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""Tier"" text;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""LinkedCases"" jsonb;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""LinkedRecords"" jsonb;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""Notes"" jsonb;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""Documents"" jsonb;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""BillingBalance"" text;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""PaymentStatus"" text;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""Pan"" text;
+                    ALTER TABLE ""AWS"".""Clients"" ADD COLUMN IF NOT EXISTS ""Gstin"" text;
+                ";
+                using (var migCmd = new NpgsqlCommand(migrationScript, conn))
+                {
+                    await migCmd.ExecuteNonQueryAsync();
+                }
+            }
 
             // 3. Seed initial data if empty (check Users table so user deletions of cases are preserved)
             if (!tablesExist || !await context.Users.AnyAsync())
