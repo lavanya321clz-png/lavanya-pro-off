@@ -65,6 +65,8 @@ public class CasesController : ControllerBase
             existing.Orders = item.Orders;
             existing.CourtAppearances = item.CourtAppearances;
             existing.Notes = item.Notes;
+            existing.AssignedJunior = item.AssignedJunior;
+            _context.Entry(existing).State = EntityState.Modified;
         }
 
         await _context.SaveChangesAsync();

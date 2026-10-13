@@ -63,6 +63,7 @@ public class ClientsController : ControllerBase
             existing.LinkedRecords = item.LinkedRecords;
             existing.Notes = item.Notes;
             existing.Documents = item.Documents;
+            _context.Entry(existing).State = EntityState.Modified;
         }
 
         await _context.SaveChangesAsync();

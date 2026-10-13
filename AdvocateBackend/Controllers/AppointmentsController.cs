@@ -69,6 +69,13 @@ public class AppointmentsController : ControllerBase
         else
         {
             _context.Entry(existing).CurrentValues.SetValues(item);
+            existing.Location = item.Location;
+            existing.Venue = item.Venue;
+            existing.Company = item.Company;
+            existing.VideoPlatform = item.VideoPlatform;
+            existing.VideoLink = item.VideoLink;
+            existing.Phone = item.Phone;
+            _context.Entry(existing).State = EntityState.Modified;
         }
 
         await _context.SaveChangesAsync();

@@ -61,6 +61,11 @@ public class TasksController : ControllerBase
         else if (string.IsNullOrWhiteSpace(item.AssignedTo) && !string.IsNullOrWhiteSpace(item.AssignedUser))
             item.AssignedTo = item.AssignedUser;
 
+        if (item.Status == "done" || item.Status == "Completed")
+            item.Completed = true;
+        else if (item.Status == "todo" || item.Status == "in_progress")
+            item.Completed = false;
+
         var existing = await _context.Tasks.FindAsync(id);
         if (existing == null)
         {
@@ -71,6 +76,8 @@ public class TasksController : ControllerBase
             _context.Entry(existing).CurrentValues.SetValues(item);
             existing.AssignedUser = item.AssignedUser;
             existing.AssignedTo = item.AssignedTo ?? "";
+            existing.Completed = item.Completed;
+            _context.Entry(existing).State = EntityState.Modified;
         }
 
         await _context.SaveChangesAsync();

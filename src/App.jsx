@@ -209,29 +209,86 @@ export default function App() {
       }
     });
   },
-  he = e => {
+  he = async e => {
     ee([e, ...k]);
-    api.createAppointment(e).then(refreshDbCounts).catch(err => console.error('Failed to save appointment in DB:', err));
-    Fe(`scheduled appointment`, `${e.clientName} - ${e.purpose}`);
+    try {
+      const res = await api.createAppointment(e);
+      if (res && res.id) {
+        ee(prev => prev.map(t => (t.id === e.id ? res : t)));
+      }
+      refreshDbCounts();
+      Fe(`scheduled appointment`, `${e.clientName} - ${e.purpose}`);
+    } catch (err) {
+      console.error('Failed to save appointment in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to save appointment in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
-  ge = e => {
-    ee(k.map(t => (t.id === e.id ? e : t)));
-    api.updateAppointment(e).then(refreshDbCounts).catch(err => console.error('Failed to update appointment in DB:', err));
-    Fe(`updated appointment`, `${e.clientName} status to ${e.status}`);
+  ge = async e => {
+    ee(prev => prev.map(t => (t.id === e.id ? e : t)));
+    try {
+      const res = await api.updateAppointment(e);
+      if (res && res.id) {
+        ee(prev => prev.map(t => (t.id === res.id ? res : t)));
+      }
+      refreshDbCounts();
+      Fe(`updated appointment`, `${e.clientName} status to ${e.status}`);
+    } catch (err) {
+      console.error('Failed to update appointment in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to update appointment in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
-  _e = e => {
-    ee(k.filter(t => t.id !== e));
-    api.deleteAppointment(e).then(refreshDbCounts).catch(err => console.error('Failed to delete appointment in DB:', err));
-    Fe(`deleted appointment`, `ID: ${e}`);
+  _e = async e => {
+    try {
+      await api.deleteAppointment(e);
+      ee(prev => prev.filter(t => t.id !== e));
+      refreshDbCounts();
+      Fe(`deleted appointment`, `ID: ${e}`);
+    } catch (err) {
+      console.error('Failed to delete appointment in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to delete appointment in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
   ye =
     m === `junior`
       ? k.filter(e => e.clientName === c.name || P.some(t => t.clientCoordinates?.clientName === e.clientName))
       : k,
   P = m === `junior` ? y.filter(e => e.assignedJunior === c.name) : y,
-  be = e => {
-    b(y.map(t => (t.id === e.id ? e : t)));
-    api.updateCase(e).then(refreshDbCounts).catch(err => console.error('Failed to update case in DB:', err));
+  be = async e => {
+    b(prev => prev.map(t => (t.id === e.id ? e : t)));
+    try {
+      const res = await api.updateCase(e);
+      if (res && res.id) {
+        b(prev => prev.map(t => (t.id === res.id ? res : t)));
+      }
+      refreshDbCounts();
+    } catch (err) {
+      console.error('Failed to update case in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to update case in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
   xe = async e => {
     try {
@@ -249,32 +306,84 @@ export default function App() {
       refreshDbCounts();
     } catch (err) {
       console.error('Failed to delete case in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to delete case in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
       throw err;
     }
   },
-  we = e => {
+  we = async e => {
     b([e, ...y]);
-    api.createCase(e).then(refreshDbCounts).catch(err => console.error('Failed to create case in DB:', err));
-    Fe(`synced case via eCourts API`, e.cnr);
-    const newNotif = {
-      id: `not_` + Date.now(),
-      type: `case_update`,
-      title: `New Case Synced`,
-      message: `${e.court} case synced successfully.`,
-      time: `Just now`,
-      read: !1
-    };
-    E([newNotif, ...T]);
-    api.createNotification(newNotif).catch(err => console.error('Failed to log notif in DB:', err));
+    try {
+      const res = await api.createCase(e);
+      if (res && res.id) {
+        b(prev => prev.map(t => (t.id === e.id ? res : t)));
+      }
+      refreshDbCounts();
+      Fe(`synced case via eCourts API`, e.cnr);
+      const newNotif = {
+        id: `not_` + Date.now(),
+        type: `case_update`,
+        title: `New Case Synced`,
+        message: `${e.court} case synced successfully.`,
+        time: `Just now`,
+        read: !1
+      };
+      E([newNotif, ...T]);
+      api.createNotification(newNotif).catch(err => console.error('Failed to log notif in DB:', err));
+    } catch (err) {
+      console.error('Failed to create case in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to save case in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
-  Te = e => {
-    S(x.map(t => (t.id === e.id ? e : t)));
-    api.updateClient(e).then(refreshDbCounts).catch(err => console.error('Failed to update client in DB:', err));
+  Te = async e => {
+    S(prev => prev.map(t => (t.id === e.id ? e : t)));
+    try {
+      const res = await api.updateClient(e);
+      if (res && res.id) {
+        S(prev => prev.map(t => (t.id === res.id ? res : t)));
+      }
+      refreshDbCounts();
+    } catch (err) {
+      console.error('Failed to update client in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to update client in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
-  De = e => {
+  De = async e => {
     S([e, ...x]);
-    api.createClient(e).then(refreshDbCounts).catch(err => console.error('Failed to save client in DB:', err));
-    Fe(`registered client contact`, e.name);
+    try {
+      const res = await api.createClient(e);
+      if (res && res.id) {
+        S(prev => prev.map(t => (t.id === e.id ? res : t)));
+      }
+      refreshDbCounts();
+      Fe(`registered client contact`, e.name);
+    } catch (err) {
+      console.error('Failed to save client in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to save client in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
   deleteClientHandler = async id => {
     try {
@@ -284,20 +393,69 @@ export default function App() {
       refreshDbCounts();
     } catch (err) {
       console.error('Failed to delete client in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to delete client from PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
     }
   },
-  Oe = e => {
-    w(C.map(t => (t.id === e.id ? e : t)));
-    api.updateTask(e).then(refreshDbCounts).catch(err => console.error('Failed to update task in DB:', err));
+  Oe = async e => {
+    w(prev => prev.map(t => (t.id === e.id ? e : t)));
+    try {
+      const res = await api.updateTask(e);
+      if (res && res.id) {
+        w(prev => prev.map(t => (t.id === res.id ? res : t)));
+      }
+      refreshDbCounts();
+    } catch (err) {
+      console.error('Failed to update task in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to update task in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
-  je = e => {
+  je = async e => {
     w([e, ...C]);
-    api.createTask(e).then(refreshDbCounts).catch(err => console.error('Failed to add task in DB:', err));
-    Fe(`added task checklist`, e.title);
+    try {
+      const res = await api.createTask(e);
+      if (res && res.id) {
+        w(prev => prev.map(t => (t.id === e.id ? res : t)));
+      }
+      refreshDbCounts();
+      Fe(`added task checklist`, e.title);
+    } catch (err) {
+      console.error('Failed to add task in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to save task in PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
-  Me = e => {
-    w(C.filter(t => t.id !== e));
-    api.deleteTask(e).then(refreshDbCounts).catch(err => console.error('Failed to delete task in DB:', err));
+  Me = async e => {
+    try {
+      await api.deleteTask(e);
+      w(prev => prev.filter(t => t.id !== e));
+      refreshDbCounts();
+    } catch (err) {
+      console.error('Failed to delete task in DB:', err);
+      Swal.fire({
+        title: 'Database Error',
+        text: 'Failed to delete task from PostgreSQL: ' + (err.message || 'Server error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   },
   Fe = (e, t) => {
     const act = { id: `act_` + Date.now(), user: c.name || `Sarah Jenkins`, action: e, target: t, time: `Just now` };
@@ -822,7 +980,7 @@ export default function App() {
                   users: o,
                   currentUser: c
                 }),
-              e === `hearings` && _jsx(HearingsCalendar, { cases: P, perms: h }),
+              e === `hearings` && _jsx(HearingsCalendar, { cases: P, onUpdateCase: be, perms: h }),
               e === `appearances` && _jsx(CourtAppearances, { cases: P, onUpdateCase: be, perms: h }),
               e === `orders` && _jsx(Orders, { cases: P, onUpdateCase: be, perms: h }),
               e === `clients` &&

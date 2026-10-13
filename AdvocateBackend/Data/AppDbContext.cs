@@ -74,11 +74,17 @@ public class AppDbContext : DbContext
             d => d == null ? new Dictionary<string, bool>() : new Dictionary<string, bool>(d)
         );
 
+        var objectComparer = new ValueComparer<object?>(
+            (c1, c2) => JsonSerializer.Serialize(c1, JsonOptions) == JsonSerializer.Serialize(c2, JsonOptions),
+            c => c == null ? 0 : JsonSerializer.Serialize(c, JsonOptions).GetHashCode(),
+            c => c == null ? null : JsonSerializer.Deserialize<object>(JsonSerializer.Serialize(c, JsonOptions), JsonOptions)
+        );
+
         // CaseItem config
         modelBuilder.Entity<CaseItem>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.ClientCoordinates).HasConversion(objectConverter).HasColumnType("jsonb");
+            entity.Property(e => e.ClientCoordinates).HasConversion(objectConverter, objectComparer).HasColumnType("jsonb");
             entity.Property(e => e.Parties).HasConversion(objectListConverter, objectListComparer).HasColumnType("jsonb");
             entity.Property(e => e.Hearings).HasConversion(objectListConverter, objectListComparer).HasColumnType("jsonb");
             entity.Property(e => e.Orders).HasConversion(objectListConverter, objectListComparer).HasColumnType("jsonb");

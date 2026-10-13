@@ -34,18 +34,25 @@ public class DatabaseController : ControllerBase
             var recordsCount = await _context.Records.CountAsync();
             var usersCount = await _context.Users.CountAsync();
 
-            string dbName = "";
-            string pgVersion = "";
-            using (var conn = (NpgsqlConnection)_context.Database.GetDbConnection())
+            string dbName = "postgres";
+            string pgVersion = "PostgreSQL";
+            var conn = _context.Database.GetDbConnection();
+            bool wasClosed = conn.State != System.Data.ConnectionState.Open;
+            if (wasClosed) await conn.OpenAsync();
+            try
             {
-                await conn.OpenAsync();
-                using var cmd = new NpgsqlCommand("SELECT current_database(), version();", conn);
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT current_database(), version();";
                 using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
                     dbName = reader.GetString(0);
                     pgVersion = reader.GetString(1);
                 }
+            }
+            finally
+            {
+                if (wasClosed) await conn.CloseAsync();
             }
 
             return Ok(new

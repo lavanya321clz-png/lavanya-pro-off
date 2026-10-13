@@ -44,6 +44,7 @@ public static class DbInitializer
             {
                 // Ensure all columns exist for existing tables
                 var migrationScript = @"
+                    ALTER TABLE ""AWS"".""Cases"" ADD COLUMN IF NOT EXISTS ""AssignedJunior"" text;
                     ALTER TABLE ""AWS"".""Tasks"" ADD COLUMN IF NOT EXISTS ""AssignedUser"" text;
                     ALTER TABLE ""AWS"".""Tasks"" ADD COLUMN IF NOT EXISTS ""CaseId"" text;
                     ALTER TABLE ""AWS"".""Appointments"" ADD COLUMN IF NOT EXISTS ""Location"" text;

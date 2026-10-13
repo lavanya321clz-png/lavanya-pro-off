@@ -61,6 +61,7 @@ public class RecordsController : ControllerBase
             _context.Entry(existing).CurrentValues.SetValues(item);
             existing.Notes = item.Notes;
             existing.ActivityLog = item.ActivityLog;
+            _context.Entry(existing).State = EntityState.Modified;
         }
 
         await _context.SaveChangesAsync();
