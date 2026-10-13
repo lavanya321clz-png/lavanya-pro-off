@@ -41,8 +41,8 @@ public static class DbInitializer
                 logger.LogInformation("Tables created successfully in AWS schema.");
             }
 
-            // 3. Seed initial data if empty
-            if (!await context.Cases.AnyAsync())
+            // 3. Seed initial data if empty (check Users table so user deletions of cases are preserved)
+            if (!tablesExist || !await context.Users.AnyAsync())
             {
                 logger.LogInformation("Database tables are empty. Seeding initial data into AWS schema...");
 

@@ -75,9 +75,27 @@ public class CasesController : ControllerBase
     public async Task<IActionResult> DeleteCase(string id)
     {
         var item = await _context.Cases.FindAsync(id);
-        if (item == null) return NotFound();
+        if (item == null) return NotFound(new { message = $"Case with ID '{id}' was not found." });
 
         _context.Cases.Remove(item);
+
+        // Also unlink this case from any clients
+        var linkedClients = await _context.Clients.ToListAsync();
+        foreach (var client in linkedClients)
+        {
+            if (client.LinkedCases != null && client.LinkedCases.Contains(id))
+            {
+                client.LinkedCases.Remove(id);
+            }
+        }
+
+        // Also unlink this case from any tasks
+        var linkedTasks = await _context.Tasks.Where(t => t.CaseId == id).ToListAsync();
+        foreach (var task in linkedTasks)
+        {
+            task.CaseId = null;
+        }
+
         await _context.SaveChangesAsync();
         return NoContent();
     }

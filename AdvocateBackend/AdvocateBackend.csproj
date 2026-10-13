@@ -15,4 +15,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <Target Name="KillExistingProcess" BeforeTargets="BeforeBuild" Condition="'$(OS)' == 'Windows_NT'">
+    <Exec Command="taskkill /f /fi &quot;imagename eq AdvocateBackend.exe&quot; &gt;nul 2&gt;&amp;1 || exit 0" IgnoreExitCode="true" />
+  </Target>
+
 </Project>

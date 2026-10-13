@@ -49,7 +49,13 @@ using (var scope = app.Services.CreateScope())
 
 // Configure HTTP request pipeline
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Advocate Backend API v1");
+});
+
+// Map root "/" to redirect to Swagger UI so opening http://localhost:5052/ never shows 404
+app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.UseCors("AllowAll");
 

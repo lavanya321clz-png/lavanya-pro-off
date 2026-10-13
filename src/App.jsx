@@ -99,45 +99,55 @@ export default function App() {
     document.documentElement.setAttribute(`data-theme`, i);
   }, [i]);
 
-  // Load from ASP.NET Core & PostgreSQL Backend on Mount
+  // Load from ASP.NET Core & PostgreSQL Backend on Mount & Polling
+  const refreshFromBackend = async () => {
+    try {
+      const status = await api.getDbStatus();
+      setDbInfo(status);
+
+      if (status && status.connected) {
+        const [resCases, resClients, resAppts, resTasks, resRecords, resNotifs, resUsers, resRbac, resActs] =
+          await Promise.allSettled([
+            api.getCases(),
+            api.getClients(),
+            api.getAppointments(),
+            api.getTasks(),
+            api.getRecords(),
+            api.getNotifications(),
+            api.getUsers(),
+            api.getRbacMatrix(),
+            api.getActivities()
+          ]);
+
+        if (resCases.status === 'fulfilled' && Array.isArray(resCases.value)) b(resCases.value);
+        if (resClients.status === 'fulfilled' && Array.isArray(resClients.value)) S(resClients.value);
+        if (resAppts.status === 'fulfilled' && Array.isArray(resAppts.value)) ee(resAppts.value);
+        if (resTasks.status === 'fulfilled' && Array.isArray(resTasks.value)) w(resTasks.value);
+        if (resRecords.status === 'fulfilled' && Array.isArray(resRecords.value)) v(resRecords.value);
+        if (resNotifs.status === 'fulfilled' && Array.isArray(resNotifs.value)) E(resNotifs.value);
+        if (resUsers.status === 'fulfilled' && Array.isArray(resUsers.value) && resUsers.value.length) {
+          s(resUsers.value);
+          l(resUsers.value[0]);
+        }
+        if (resRbac.status === 'fulfilled' && Object.keys(resRbac.value || {}).length) d(resRbac.value);
+        if (resActs.status === 'fulfilled' && Array.isArray(resActs.value)) O(resActs.value);
+      }
+    } catch (err) {
+      console.warn('Backend connection notice:', err);
+    }
+  };
+
   useEffect(() => {
-    const loadFromBackend = async () => {
+    refreshFromBackend();
+
+    const interval = setInterval(async () => {
       try {
         const status = await api.getDbStatus();
         setDbInfo(status);
+      } catch (_) {}
+    }, 4000);
 
-        if (status && status.connected) {
-          const [resCases, resClients, resAppts, resTasks, resRecords, resNotifs, resUsers, resRbac, resActs] =
-            await Promise.allSettled([
-              api.getCases(),
-              api.getClients(),
-              api.getAppointments(),
-              api.getTasks(),
-              api.getRecords(),
-              api.getNotifications(),
-              api.getUsers(),
-              api.getRbacMatrix(),
-              api.getActivities()
-            ]);
-
-          if (resCases.status === 'fulfilled' && resCases.value?.length) b(resCases.value);
-          if (resClients.status === 'fulfilled' && resClients.value?.length) S(resClients.value);
-          if (resAppts.status === 'fulfilled' && resAppts.value?.length) ee(resAppts.value);
-          if (resTasks.status === 'fulfilled' && resTasks.value?.length) w(resTasks.value);
-          if (resRecords.status === 'fulfilled' && resRecords.value?.length) v(resRecords.value);
-          if (resNotifs.status === 'fulfilled' && resNotifs.value?.length) E(resNotifs.value);
-          if (resUsers.status === 'fulfilled' && resUsers.value?.length) {
-            s(resUsers.value);
-            l(resUsers.value[0]);
-          }
-          if (resRbac.status === 'fulfilled' && Object.keys(resRbac.value || {}).length) d(resRbac.value);
-          if (resActs.status === 'fulfilled' && resActs.value?.length) O(resActs.value);
-        }
-      } catch (err) {
-        console.warn('Backend connection notice:', err);
-      }
-    };
-    loadFromBackend();
+    return () => clearInterval(interval);
   }, []);
 
   let ce = () => {
@@ -216,10 +226,27 @@ export default function App() {
     b(y.map(t => (t.id === e.id ? e : t)));
     api.updateCase(e).catch(err => console.error('Failed to update case in DB:', err));
   },
-  xe = e => {
-    b(y.filter(t => t.id !== e));
-    api.deleteCase(e).catch(err => console.error('Failed to delete case in DB:', err));
-    Fe(`deleted a case file`, `ID: ${e}`);
+  xe = async e => {
+    try {
+      await api.deleteCase(e);
+      b(prev => prev.filter(t => t.id !== e));
+      Fe(`deleted a case file`, `ID: ${e}`);
+      S(prevClients =>
+        prevClients.map(c => {
+          if (c.linkedCases && c.linkedCases.includes(e)) {
+            return { ...c, linkedCases: c.linkedCases.filter(cid => cid !== e) };
+          }
+          return c;
+        })
+      );
+      // Refresh DB counts
+      api.getDbStatus().then(st => {
+        if (st && st.connected) setDbInfo(st);
+      }).catch(() => {});
+    } catch (err) {
+      console.error('Failed to delete case in DB:', err);
+      throw err;
+    }
   },
   we = e => {
     b([e, ...y]);
