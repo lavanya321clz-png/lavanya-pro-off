@@ -36,23 +36,15 @@ public class DatabaseController : ControllerBase
 
             string dbName = "postgres";
             string pgVersion = "PostgreSQL";
-            var conn = _context.Database.GetDbConnection();
-            bool wasClosed = conn.State != System.Data.ConnectionState.Open;
-            if (wasClosed) await conn.OpenAsync();
             try
             {
-                using var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT current_database(), version();";
-                using var reader = await cmd.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    dbName = reader.GetString(0);
-                    pgVersion = reader.GetString(1);
-                }
+                var conn = _context.Database.GetDbConnection();
+                if (!string.IsNullOrEmpty(conn.Database)) dbName = conn.Database;
+                if (!string.IsNullOrEmpty(conn.ServerVersion)) pgVersion = conn.ServerVersion;
             }
-            finally
+            catch
             {
-                if (wasClosed) await conn.CloseAsync();
+                // Fallback safe extraction
             }
 
             return Ok(new

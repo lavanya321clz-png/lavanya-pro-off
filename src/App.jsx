@@ -84,56 +84,88 @@ export default function App() {
     [f, p] = useState(!1),
     m = c.role,
     h = u[m]?.permissions || {},
-    [g, v] = useState(initialRecords),
-    [y, b] = useState(initialCases),
-    [x, S] = useState(initialClients),
-    [C, w] = useState(initialTasks),
-    [T, E] = useState(initialNotifications),
-    [D, O] = useState(initialActivities),
-    [k, ee] = useState(initialAppointments),
+    [g, v] = useState([]),
+    [y, b] = useState([]),
+    [x, S] = useState([]),
+    [C, w] = useState([]),
+    [T, E] = useState([]),
+    [D, O] = useState([]),
+    [k, ee] = useState([]),
     [te, ne] = useState(``),
     [ae, j] = useState(!1),
-    [dbInfo, setDbInfo] = useState({ connected: false, loading: true });
+    [dbInfo, setDbInfo] = useState({ connected: false, loading: true }),
+    [isInitialLoading, setIsInitialLoading] = useState(true),
+    [initialLoadError, setInitialLoadError] = useState(null);
 
   useEffect(() => {
     document.documentElement.setAttribute(`data-theme`, i);
   }, [i]);
 
-  // Load from ASP.NET Core & PostgreSQL Backend on Mount & Polling
+  // Load directly from ASP.NET Core & PostgreSQL Backend on Mount & Polling
   const refreshFromBackend = async () => {
     try {
-      const status = await api.getDbStatus();
-      setDbInfo(status);
+      const [resCases, resClients, resAppts, resTasks, resRecords, resNotifs, resUsers, resRbac, resActs, resStatus] =
+        await Promise.allSettled([
+          api.getCases(),
+          api.getClients(),
+          api.getAppointments(),
+          api.getTasks(),
+          api.getRecords(),
+          api.getNotifications(),
+          api.getUsers(),
+          api.getRbacMatrix(),
+          api.getActivities(),
+          api.getDbStatus()
+        ]);
 
-      if (status && status.connected) {
-        const [resCases, resClients, resAppts, resTasks, resRecords, resNotifs, resUsers, resRbac, resActs] =
-          await Promise.allSettled([
-            api.getCases(),
-            api.getClients(),
-            api.getAppointments(),
-            api.getTasks(),
-            api.getRecords(),
-            api.getNotifications(),
-            api.getUsers(),
-            api.getRbacMatrix(),
-            api.getActivities()
-          ]);
+      if (resStatus.status === 'fulfilled' && resStatus.value) {
+        setDbInfo(resStatus.value);
+      }
 
-        if (resCases.status === 'fulfilled' && Array.isArray(resCases.value)) b(resCases.value);
-        if (resClients.status === 'fulfilled' && Array.isArray(resClients.value)) S(resClients.value);
-        if (resAppts.status === 'fulfilled' && Array.isArray(resAppts.value)) ee(resAppts.value);
-        if (resTasks.status === 'fulfilled' && Array.isArray(resTasks.value)) w(resTasks.value);
-        if (resRecords.status === 'fulfilled' && Array.isArray(resRecords.value)) v(resRecords.value);
-        if (resNotifs.status === 'fulfilled' && Array.isArray(resNotifs.value)) E(resNotifs.value);
+      const coreSettled = [resCases, resClients, resTasks];
+      const allCoreFailed = coreSettled.every(r => r.status === 'rejected');
+
+      if (allCoreFailed) {
+        const errMsg = resCases.reason?.message || 'Failed to connect to PostgreSQL backend API.';
+        setInitialLoadError(errMsg);
+        console.error('Backend connection failed:', errMsg);
+      } else {
+        setInitialLoadError(null);
+
+        if (resCases.status === 'fulfilled' && Array.isArray(resCases.value)) {
+          b(resCases.value);
+        }
+        if (resClients.status === 'fulfilled' && Array.isArray(resClients.value)) {
+          S(resClients.value);
+        }
+        if (resAppts.status === 'fulfilled' && Array.isArray(resAppts.value)) {
+          ee(resAppts.value);
+        }
+        if (resTasks.status === 'fulfilled' && Array.isArray(resTasks.value)) {
+          w(resTasks.value);
+        }
+        if (resRecords.status === 'fulfilled' && Array.isArray(resRecords.value)) {
+          v(resRecords.value);
+        }
+        if (resNotifs.status === 'fulfilled' && Array.isArray(resNotifs.value)) {
+          E(resNotifs.value);
+        }
         if (resUsers.status === 'fulfilled' && Array.isArray(resUsers.value) && resUsers.value.length) {
           s(resUsers.value);
-          l(resUsers.value[0]);
+          l(prev => resUsers.value.find(u => u.id === prev?.id) || resUsers.value[0]);
         }
-        if (resRbac.status === 'fulfilled' && Object.keys(resRbac.value || {}).length) d(resRbac.value);
-        if (resActs.status === 'fulfilled' && Array.isArray(resActs.value)) O(resActs.value);
+        if (resRbac.status === 'fulfilled' && Object.keys(resRbac.value || {}).length) {
+          d(resRbac.value);
+        }
+        if (resActs.status === 'fulfilled' && Array.isArray(resActs.value)) {
+          O(resActs.value);
+        }
       }
     } catch (err) {
-      console.warn('Backend connection notice:', err);
+      console.error('Backend connection notice:', err);
+      setInitialLoadError(err.message || 'Error fetching data from backend');
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
@@ -210,14 +242,13 @@ export default function App() {
     });
   },
   he = async e => {
-    ee([e, ...k]);
     try {
       const res = await api.createAppointment(e);
-      if (res && res.id) {
-        ee(prev => prev.map(t => (t.id === e.id ? res : t)));
-      }
+      const saved = (res && res.id) ? res : e;
+      ee(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
       refreshDbCounts();
-      Fe(`scheduled appointment`, `${e.clientName} - ${e.purpose}`);
+      Fe(`scheduled appointment`, `${saved.clientName} - ${saved.purpose}`);
+      return saved;
     } catch (err) {
       console.error('Failed to save appointment in DB:', err);
       Swal.fire({
@@ -227,17 +258,17 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   ge = async e => {
-    ee(prev => prev.map(t => (t.id === e.id ? e : t)));
     try {
       const res = await api.updateAppointment(e);
-      if (res && res.id) {
-        ee(prev => prev.map(t => (t.id === res.id ? res : t)));
-      }
+      const updated = (res && res.id) ? res : e;
+      ee(prev => prev.map(t => (t.id === updated.id ? updated : t)));
       refreshDbCounts();
-      Fe(`updated appointment`, `${e.clientName} status to ${e.status}`);
+      Fe(`updated appointment`, `${updated.clientName} status to ${updated.status}`);
+      return updated;
     } catch (err) {
       console.error('Failed to update appointment in DB:', err);
       Swal.fire({
@@ -247,6 +278,7 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   _e = async e => {
@@ -264,6 +296,7 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   ye =
@@ -272,13 +305,12 @@ export default function App() {
       : k,
   P = m === `junior` ? y.filter(e => e.assignedJunior === c.name) : y,
   be = async e => {
-    b(prev => prev.map(t => (t.id === e.id ? e : t)));
     try {
       const res = await api.updateCase(e);
-      if (res && res.id) {
-        b(prev => prev.map(t => (t.id === res.id ? res : t)));
-      }
+      const updated = (res && res.id) ? res : e;
+      b(prev => prev.map(t => (t.id === updated.id ? updated : t)));
       refreshDbCounts();
+      return updated;
     } catch (err) {
       console.error('Failed to update case in DB:', err);
       Swal.fire({
@@ -288,6 +320,7 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   xe = async e => {
@@ -301,6 +334,14 @@ export default function App() {
             return { ...c, linkedCases: c.linkedCases.filter(cid => cid !== e) };
           }
           return c;
+        })
+      );
+      w(prevTasks =>
+        prevTasks.map(t => {
+          if (t.caseId === e) {
+            return { ...t, caseId: null };
+          }
+          return t;
         })
       );
       refreshDbCounts();
@@ -317,24 +358,23 @@ export default function App() {
     }
   },
   we = async e => {
-    b([e, ...y]);
     try {
       const res = await api.createCase(e);
-      if (res && res.id) {
-        b(prev => prev.map(t => (t.id === e.id ? res : t)));
-      }
+      const created = (res && res.id) ? res : e;
+      b(prev => [created, ...prev.filter(t => t.id !== created.id)]);
       refreshDbCounts();
-      Fe(`synced case via eCourts API`, e.cnr);
+      Fe(`synced case via eCourts API`, created.cnr || created.title);
       const newNotif = {
         id: `not_` + Date.now(),
         type: `case_update`,
         title: `New Case Synced`,
-        message: `${e.court} case synced successfully.`,
+        message: `${created.court} case synced successfully.`,
         time: `Just now`,
         read: !1
       };
-      E([newNotif, ...T]);
+      E(prev => [newNotif, ...prev]);
       api.createNotification(newNotif).catch(err => console.error('Failed to log notif in DB:', err));
+      return created;
     } catch (err) {
       console.error('Failed to create case in DB:', err);
       Swal.fire({
@@ -344,16 +384,16 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   Te = async e => {
-    S(prev => prev.map(t => (t.id === e.id ? e : t)));
     try {
       const res = await api.updateClient(e);
-      if (res && res.id) {
-        S(prev => prev.map(t => (t.id === res.id ? res : t)));
-      }
+      const updated = (res && res.id) ? res : e;
+      S(prev => prev.map(t => (t.id === updated.id ? updated : t)));
       refreshDbCounts();
+      return updated;
     } catch (err) {
       console.error('Failed to update client in DB:', err);
       Swal.fire({
@@ -363,17 +403,17 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   De = async e => {
-    S([e, ...x]);
     try {
       const res = await api.createClient(e);
-      if (res && res.id) {
-        S(prev => prev.map(t => (t.id === e.id ? res : t)));
-      }
+      const created = (res && res.id) ? res : e;
+      S(prev => [created, ...prev.filter(t => t.id !== created.id)]);
       refreshDbCounts();
-      Fe(`registered client contact`, e.name);
+      Fe(`registered client contact`, created.name);
+      return created;
     } catch (err) {
       console.error('Failed to save client in DB:', err);
       Swal.fire({
@@ -383,6 +423,7 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   deleteClientHandler = async id => {
@@ -400,16 +441,16 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   Oe = async e => {
-    w(prev => prev.map(t => (t.id === e.id ? e : t)));
     try {
       const res = await api.updateTask(e);
-      if (res && res.id) {
-        w(prev => prev.map(t => (t.id === res.id ? res : t)));
-      }
+      const updated = (res && res.id) ? res : e;
+      w(prev => prev.map(t => (t.id === updated.id ? updated : t)));
       refreshDbCounts();
+      return updated;
     } catch (err) {
       console.error('Failed to update task in DB:', err);
       Swal.fire({
@@ -419,17 +460,17 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   je = async e => {
-    w([e, ...C]);
     try {
       const res = await api.createTask(e);
-      if (res && res.id) {
-        w(prev => prev.map(t => (t.id === e.id ? res : t)));
-      }
+      const created = (res && res.id) ? res : e;
+      w(prev => [created, ...prev.filter(t => t.id !== created.id)]);
       refreshDbCounts();
-      Fe(`added task checklist`, e.title);
+      Fe(`added task checklist`, created.title);
+      return created;
     } catch (err) {
       console.error('Failed to add task in DB:', err);
       Swal.fire({
@@ -439,6 +480,7 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   Me = async e => {
@@ -455,6 +497,7 @@ export default function App() {
         background: 'var(--bg-secondary)',
         color: 'var(--text-primary)'
       });
+      throw err;
     }
   },
   Fe = (e, t) => {
@@ -491,7 +534,7 @@ export default function App() {
             <tr><td style="padding: 4px 0; color: var(--text-secondary);">Database:</td><td style="font-weight: 700; color: var(--text-primary);">${dbInfo.database || 'postgres'}</td></tr>
             <tr><td style="padding: 4px 0; color: var(--text-secondary);">Schema:</td><td style="font-weight: 700; color: var(--primary);">${dbInfo.schema || 'AWS'}</td></tr>
             <tr><td style="padding: 4px 0; color: var(--text-secondary);">Backend:</td><td style="font-weight: 700; color: var(--text-primary);">ASP.NET Core 8 (C#)</td></tr>
-            <tr><td style="padding: 4px 0; color: var(--text-secondary);">Endpoint:</td><td style="font-family: monospace; font-size: 0.8rem; color: var(--text-primary);">http://localhost:5052/api</td></tr>
+            <tr><td style="padding: 4px 0; color: var(--text-secondary);">Endpoint:</td><td style="font-family: monospace; font-size: 0.8rem; color: var(--text-primary);">${window.location.origin}/api</td></tr>
             <tr><td style="padding: 4px 0; color: var(--text-secondary);">PostgreSQL Server:</td><td style="font-size: 0.75rem; color: var(--text-secondary);">${dbInfo.serverVersion ? dbInfo.serverVersion.split(',')[0] : 'v17.10'}</td></tr>
             ${
               dbInfo.counts
@@ -514,6 +557,50 @@ export default function App() {
       color: 'var(--text-primary)'
     });
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: '16px', background: 'var(--bg-primary, #0f172a)', color: 'var(--text-primary, #f8fafc)' }}>
+        <div style={{ width: '48px', height: '48px', border: '4px solid rgba(59, 130, 246, 0.2)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>Loading AdvocateOS...</h3>
+        <p style={{ margin: 0, color: 'var(--text-secondary, #94a3b8)', fontSize: '0.9rem' }}>Fetching live dossiers and records from PostgreSQL backend</p>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (initialLoadError && y.length === 0 && x.length === 0) {
+    return (
+      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column', gap: '16px', padding: '24px', textAlign: 'center', background: 'var(--bg-primary, #0f172a)', color: 'var(--text-primary, #f8fafc)' }}>
+        <div style={{ padding: '16px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', marginBottom: '8px' }}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>Unable to Connect to PostgreSQL Backend</h2>
+        <p style={{ margin: 0, maxWidth: '520px', color: 'var(--text-secondary, #94a3b8)', lineHeight: 1.5, fontSize: '0.92rem' }}>
+          AdvocateOS failed to fetch database records from the backend API (<code>/api/cases</code>). {initialLoadError}
+        </p>
+        <button
+          onClick={() => {
+            setIsInitialLoading(true);
+            setInitialLoadError(null);
+            refreshFromBackend();
+          }}
+          style={{
+            marginTop: '12px',
+            padding: '10px 24px',
+            backgroundColor: '#3b82f6',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            fontWeight: 600,
+            cursor: 'pointer'
+          }}
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
+  }
 
   return _jsxs(`div`, {
     className: `app-container`,

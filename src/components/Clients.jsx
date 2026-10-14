@@ -36,8 +36,19 @@ export default function Clients({
     [y, b] = useState(''),
     [x, S] = useState(''),
     [C, w] = useState(''),
-    [editForm, setEditForm] = useState({ name: '', company: '', email: '', phone: '' }),
-    T = e.find(item => item.id === o) || e[0],
+    [editForm, setEditForm] = useState({ name: '', company: '', email: '', phone: '' });
+
+  React.useEffect(() => {
+    if (e && e.length > 0) {
+      if (!o || !e.some(item => item.id === o)) {
+        s(e[0].id);
+      }
+    } else {
+      s(null);
+    }
+  }, [e, o]);
+
+  let T = e.find(item => item.id === o) || e[0],
     E = evt => {
       evt.preventDefault();
       if (!f.trim()) return;

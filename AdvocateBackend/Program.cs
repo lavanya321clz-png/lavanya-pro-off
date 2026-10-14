@@ -19,6 +19,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseUrls = true;
+    options.LowercaseQueryStrings = true;
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

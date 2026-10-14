@@ -3,8 +3,18 @@ const API_BASE = '/api';
 
 async function handleResponse(response) {
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`);
+    let errorDetail = '';
+    try {
+      const errJson = await response.json();
+      errorDetail = errJson.message || errJson.error || JSON.stringify(errJson);
+    } catch {
+      try {
+        errorDetail = await response.text();
+      } catch {
+        errorDetail = response.statusText;
+      }
+    }
+    throw new Error(`API Error (${response.status}): ${errorDetail || response.statusText}`);
   }
   if (response.status === 204) return null;
   return await response.json();
