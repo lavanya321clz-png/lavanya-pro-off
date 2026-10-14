@@ -115,60 +115,80 @@ export default function HearingsCalendar({ cases: e = [], onUpdateCase: onUpdate
       cancelButtonColor: 'var(--border-color)',
       background: 'var(--bg-secondary)',
       color: 'var(--text-primary)'
-    }).then(res => {
+    }).then(async res => {
       if (res.isConfirmed) {
         const targetCase = e.find(c => c.id === hearing.caseId);
         if (!targetCase || !onUpdate) return;
-        const updatedHearings = (targetCase.hearings || []).filter(
-          item => !(item.date === hearing.date && item.time === hearing.time && item.purpose === hearing.purpose)
-        );
-        onUpdate({ ...targetCase, hearings: updatedHearings });
-        Swal.fire({
-          title: 'Deleted!',
-          text: 'Hearing removed from case and database updated.',
-          icon: 'success',
-          confirmButtonColor: 'var(--primary)',
-          background: 'var(--bg-secondary)',
-          color: 'var(--text-primary)'
-        });
+        try {
+          const updatedHearings = (targetCase.hearings || []).filter(
+            item => !(item.date === hearing.date && item.time === hearing.time && item.purpose === hearing.purpose)
+          );
+          await onUpdate({ ...targetCase, hearings: updatedHearings });
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Hearing removed from case and database updated.',
+            icon: 'success',
+            confirmButtonColor: 'var(--primary)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)'
+          });
+        } catch (err) {
+          Swal.fire({
+            title: 'Delete Failed',
+            text: 'Could not remove hearing from database: ' + (err.message || 'Error'),
+            icon: 'error',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)'
+          });
+        }
       }
     });
   };
 
   // 3. Edit Hearing Submit
-  const handleEditSubmit = evt => {
+  const handleEditSubmit = async evt => {
     evt.preventDefault();
     if (!editingHearing || !onUpdate) return;
     const targetCase = e.find(c => c.id === editingHearing.caseId);
     if (!targetCase) return;
 
-    const updatedHearings = (targetCase.hearings || []).map(item => {
-      if (
-        item.date === editingHearing.originalDate &&
-        item.time === editingHearing.originalTime &&
-        item.purpose === editingHearing.originalPurpose
-      ) {
-        return {
-          date: editingHearing.date,
-          time: editingHearing.time,
-          purpose: editingHearing.purpose,
-          judge: editingHearing.judge,
-          business: editingHearing.business
-        };
-      }
-      return item;
-    });
+    try {
+      const updatedHearings = (targetCase.hearings || []).map(item => {
+        if (
+          item.date === editingHearing.originalDate &&
+          item.time === editingHearing.originalTime &&
+          item.purpose === editingHearing.originalPurpose
+        ) {
+          return {
+            date: editingHearing.date,
+            time: editingHearing.time,
+            purpose: editingHearing.purpose,
+            judge: editingHearing.judge,
+            business: editingHearing.business
+          };
+        }
+        return item;
+      });
 
-    onUpdate({ ...targetCase, hearings: updatedHearings });
-    setEditingHearing(null);
-    Swal.fire({
-      title: 'Hearing Updated!',
-      text: 'Hearing details updated and synced to database.',
-      icon: 'success',
-      confirmButtonColor: 'var(--primary)',
-      background: 'var(--bg-secondary)',
-      color: 'var(--text-primary)'
-    });
+      await onUpdate({ ...targetCase, hearings: updatedHearings });
+      setEditingHearing(null);
+      Swal.fire({
+        title: 'Hearing Updated!',
+        text: 'Hearing details updated and synced to database.',
+        icon: 'success',
+        confirmButtonColor: 'var(--primary)',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    } catch (err) {
+      Swal.fire({
+        title: 'Update Failed',
+        text: 'Could not update hearing in database: ' + (err.message || 'Error'),
+        icon: 'error',
+        background: 'var(--bg-secondary)',
+        color: 'var(--text-primary)'
+      });
+    }
   };
 
   // 4. Schedule New Hearing Submit
