@@ -20,9 +20,11 @@ public class DatabaseController : ControllerBase
         return Ok(new
         {
             connected = true,
-            database = "In-Memory Mock Store",
-            mode = "Standalone Web API (No Database Required)",
-            serverVersion = "Standalone In-Memory v1.0",
+            database = "JSON File Persistence Store",
+            mode = "Persistent JSON (No Database Required)",
+            dataPath = _dataStore.DataFilePath,
+            persistentFileExists = System.IO.File.Exists(_dataStore.DataFilePath),
+            serverVersion = "Persistent JSON v1.1",
             schema = "None",
             timestamp = DateTime.UtcNow,
             counts = new

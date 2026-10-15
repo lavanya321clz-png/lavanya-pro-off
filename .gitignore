@@ -30,3 +30,7 @@ dist-ssr
 
 # Nested duplicate directory
 Advocate_Module/
+
+# Runtime persistent data and backup files
+AdvocateBackend/data/
+*.bak

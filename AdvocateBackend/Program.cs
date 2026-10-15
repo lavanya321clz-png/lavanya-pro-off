@@ -35,11 +35,11 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Initialize In-Memory Data Store from seedData.json (standalone without database)
+// Initialize In-Memory Data Store with JSON file persistence (standalone without database)
 var dataStore = app.Services.GetRequiredService<InMemoryDataStore>();
 var env = app.Services.GetRequiredService<IWebHostEnvironment>();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-dataStore.Initialize(env.ContentRootPath, logger);
+dataStore.Initialize(env.ContentRootPath, app.Configuration, logger);
 
 // Configure HTTP request pipeline
 app.UseSwagger();

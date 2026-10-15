@@ -44,29 +44,7 @@ public class RbacController : ControllerBase
     [HttpPut]
     public IActionResult UpdateRbacMatrix([FromBody] Dictionary<string, RbacRoleDto> matrix)
     {
-        foreach (var (key, dto) in matrix)
-        {
-            var existing = _store.GetRbacRole(key);
-            if (existing != null)
-            {
-                existing.Label = dto.Label;
-                existing.Avatar = dto.Avatar;
-                existing.Color = dto.Color;
-                existing.Permissions = dto.Permissions;
-            }
-            else
-            {
-                _store.SetRbacRole(key, new RbacRoleItem
-                {
-                    RoleKey = key,
-                    Label = dto.Label,
-                    Avatar = dto.Avatar,
-                    Color = dto.Color,
-                    Permissions = dto.Permissions
-                });
-            }
-        }
-
+        _store.UpdateRbacMatrix(matrix);
         return Ok(matrix);
     }
 }
