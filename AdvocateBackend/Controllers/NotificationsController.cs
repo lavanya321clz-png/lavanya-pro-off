@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -9,70 +8,57 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class NotificationsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public NotificationsController(AppDbContext context)
+    public NotificationsController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<NotificationItem>>> GetNotifications()
+    public ActionResult<IEnumerable<NotificationItem>> GetNotifications()
     {
-        return await _context.Notifications.ToListAsync();
+        return Ok(_store.GetNotifications());
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<NotificationItem>> GetNotification(string id)
+    public ActionResult<NotificationItem> GetNotification(string id)
     {
-        var item = await _context.Notifications.FindAsync(id);
+        var item = _store.GetNotification(id);
         if (item == null) return NotFound();
-        return item;
+        return Ok(item);
     }
 
     [HttpPost]
-    public async Task<ActionResult<NotificationItem>> CreateNotification([FromBody] NotificationItem item)
+    public ActionResult<NotificationItem> CreateNotification([FromBody] NotificationItem item)
     {
         if (string.IsNullOrWhiteSpace(item.Id))
         {
             item.Id = "not_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        _context.Notifications.Add(item);
-        await _context.SaveChangesAsync();
+        _store.AddNotification(item);
         return CreatedAtAction(nameof(GetNotification), new { id = item.Id }, item);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateNotification(string id, [FromBody] NotificationItem item)
+    public IActionResult UpdateNotification(string id, [FromBody] NotificationItem item)
     {
         if (id != item.Id)
         {
             item.Id = id;
         }
 
-        var existing = await _context.Notifications.FindAsync(id);
-        if (existing == null)
-        {
-            _context.Notifications.Add(item);
-        }
-        else
-        {
-            _context.Entry(existing).CurrentValues.SetValues(item);
-        }
-
-        await _context.SaveChangesAsync();
+        _store.UpdateNotification(id, item);
         return Ok(item);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteNotification(string id)
+    public IActionResult DeleteNotification(string id)
     {
-        var item = await _context.Notifications.FindAsync(id);
-        if (item == null) return NotFound();
+        var deleted = _store.DeleteNotification(id);
+        if (!deleted) return NotFound();
 
-        _context.Notifications.Remove(item);
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 }

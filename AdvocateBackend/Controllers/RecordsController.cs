@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -9,73 +8,57 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class RecordsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public RecordsController(AppDbContext context)
+    public RecordsController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<RecordItem>>> GetRecords()
+    public ActionResult<IEnumerable<RecordItem>> GetRecords()
     {
-        return await _context.Records.ToListAsync();
+        return Ok(_store.GetRecords());
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<RecordItem>> GetRecord(string id)
+    public ActionResult<RecordItem> GetRecord(string id)
     {
-        var item = await _context.Records.FindAsync(id);
+        var item = _store.GetRecord(id);
         if (item == null) return NotFound();
-        return item;
+        return Ok(item);
     }
 
     [HttpPost]
-    public async Task<ActionResult<RecordItem>> CreateRecord([FromBody] RecordItem item)
+    public ActionResult<RecordItem> CreateRecord([FromBody] RecordItem item)
     {
         if (string.IsNullOrWhiteSpace(item.Id))
         {
             item.Id = "rec_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        _context.Records.Add(item);
-        await _context.SaveChangesAsync();
+        _store.AddRecord(item);
         return CreatedAtAction(nameof(GetRecord), new { id = item.Id }, item);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateRecord(string id, [FromBody] RecordItem item)
+    public IActionResult UpdateRecord(string id, [FromBody] RecordItem item)
     {
         if (id != item.Id)
         {
             item.Id = id;
         }
 
-        var existing = await _context.Records.FindAsync(id);
-        if (existing == null)
-        {
-            _context.Records.Add(item);
-        }
-        else
-        {
-            _context.Entry(existing).CurrentValues.SetValues(item);
-            existing.Notes = item.Notes;
-            existing.ActivityLog = item.ActivityLog;
-            _context.Entry(existing).State = EntityState.Modified;
-        }
-
-        await _context.SaveChangesAsync();
+        _store.UpdateRecord(id, item);
         return Ok(item);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteRecord(string id)
+    public IActionResult DeleteRecord(string id)
     {
-        var item = await _context.Records.FindAsync(id);
-        if (item == null) return NotFound();
+        var deleted = _store.DeleteRecord(id);
+        if (!deleted) return NotFound();
 
-        _context.Records.Remove(item);
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 }

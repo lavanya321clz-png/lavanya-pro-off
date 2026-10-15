@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -9,29 +8,29 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class AppointmentsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public AppointmentsController(AppDbContext context)
+    public AppointmentsController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AppointmentItem>>> GetAppointments()
+    public ActionResult<IEnumerable<AppointmentItem>> GetAppointments()
     {
-        return await _context.Appointments.ToListAsync();
+        return Ok(_store.GetAppointments());
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AppointmentItem>> GetAppointment(string id)
+    public ActionResult<AppointmentItem> GetAppointment(string id)
     {
-        var item = await _context.Appointments.FindAsync(id);
+        var item = _store.GetAppointment(id);
         if (item == null) return NotFound();
-        return item;
+        return Ok(item);
     }
 
     [HttpPost]
-    public async Task<ActionResult<AppointmentItem>> CreateAppointment([FromBody] AppointmentItem item)
+    public ActionResult<AppointmentItem> CreateAppointment([FromBody] AppointmentItem item)
     {
         if (string.IsNullOrWhiteSpace(item.Id))
         {
@@ -43,13 +42,12 @@ public class AppointmentsController : ControllerBase
         else if (string.IsNullOrWhiteSpace(item.Location) && !string.IsNullOrWhiteSpace(item.Venue))
             item.Location = item.Venue;
 
-        _context.Appointments.Add(item);
-        await _context.SaveChangesAsync();
+        _store.AddAppointment(item);
         return CreatedAtAction(nameof(GetAppointment), new { id = item.Id }, item);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateAppointment(string id, [FromBody] AppointmentItem item)
+    public IActionResult UpdateAppointment(string id, [FromBody] AppointmentItem item)
     {
         if (id != item.Id)
         {
@@ -61,35 +59,16 @@ public class AppointmentsController : ControllerBase
         else if (string.IsNullOrWhiteSpace(item.Location) && !string.IsNullOrWhiteSpace(item.Venue))
             item.Location = item.Venue;
 
-        var existing = await _context.Appointments.FindAsync(id);
-        if (existing == null)
-        {
-            _context.Appointments.Add(item);
-        }
-        else
-        {
-            _context.Entry(existing).CurrentValues.SetValues(item);
-            existing.Location = item.Location;
-            existing.Venue = item.Venue;
-            existing.Company = item.Company;
-            existing.VideoPlatform = item.VideoPlatform;
-            existing.VideoLink = item.VideoLink;
-            existing.Phone = item.Phone;
-            _context.Entry(existing).State = EntityState.Modified;
-        }
-
-        await _context.SaveChangesAsync();
+        _store.UpdateAppointment(id, item);
         return Ok(item);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteAppointment(string id)
+    public IActionResult DeleteAppointment(string id)
     {
-        var item = await _context.Appointments.FindAsync(id);
-        if (item == null) return NotFound();
+        var deleted = _store.DeleteAppointment(id);
+        if (!deleted) return NotFound();
 
-        _context.Appointments.Remove(item);
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 }

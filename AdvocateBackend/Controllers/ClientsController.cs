@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -9,75 +8,57 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class ClientsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public ClientsController(AppDbContext context)
+    public ClientsController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ClientItem>>> GetClients()
+    public ActionResult<IEnumerable<ClientItem>> GetClients()
     {
-        return await _context.Clients.ToListAsync();
+        return Ok(_store.GetClients());
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ClientItem>> GetClient(string id)
+    public ActionResult<ClientItem> GetClient(string id)
     {
-        var item = await _context.Clients.FindAsync(id);
+        var item = _store.GetClient(id);
         if (item == null) return NotFound();
-        return item;
+        return Ok(item);
     }
 
     [HttpPost]
-    public async Task<ActionResult<ClientItem>> CreateClient([FromBody] ClientItem item)
+    public ActionResult<ClientItem> CreateClient([FromBody] ClientItem item)
     {
         if (string.IsNullOrWhiteSpace(item.Id))
         {
             item.Id = "cli_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        _context.Clients.Add(item);
-        await _context.SaveChangesAsync();
+        _store.AddClient(item);
         return CreatedAtAction(nameof(GetClient), new { id = item.Id }, item);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateClient(string id, [FromBody] ClientItem item)
+    public IActionResult UpdateClient(string id, [FromBody] ClientItem item)
     {
         if (id != item.Id)
         {
             item.Id = id;
         }
 
-        var existing = await _context.Clients.FindAsync(id);
-        if (existing == null)
-        {
-            _context.Clients.Add(item);
-        }
-        else
-        {
-            _context.Entry(existing).CurrentValues.SetValues(item);
-            existing.LinkedCases = item.LinkedCases;
-            existing.LinkedRecords = item.LinkedRecords;
-            existing.Notes = item.Notes;
-            existing.Documents = item.Documents;
-            _context.Entry(existing).State = EntityState.Modified;
-        }
-
-        await _context.SaveChangesAsync();
+        _store.UpdateClient(id, item);
         return Ok(item);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteClient(string id)
+    public IActionResult DeleteClient(string id)
     {
-        var item = await _context.Clients.FindAsync(id);
-        if (item == null) return NotFound();
+        var deleted = _store.DeleteClient(id);
+        if (!deleted) return NotFound();
 
-        _context.Clients.Remove(item);
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 }

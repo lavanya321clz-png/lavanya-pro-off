@@ -1,12 +1,10 @@
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add PostgreSQL DbContext with Npgsql
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresConnection")));
+// Register In-Memory Data Store as a Singleton service (No Database Required)
+builder.Services.AddSingleton<InMemoryDataStore>();
 
 // Enable CORS for frontend Vite React app
 builder.Services.AddCors(options =>
@@ -37,21 +35,11 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Ensure Database & Schema "AWS" is initialized and seeded
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    try
-    {
-        await DbInitializer.InitializeAsync(context, env, logger);
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Failed to initialize and seed database.");
-    }
-}
+// Initialize In-Memory Data Store from seedData.json (standalone without database)
+var dataStore = app.Services.GetRequiredService<InMemoryDataStore>();
+var env = app.Services.GetRequiredService<IWebHostEnvironment>();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+dataStore.Initialize(env.ContentRootPath, logger);
 
 // Configure HTTP request pipeline
 app.UseSwagger();

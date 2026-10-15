@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -9,29 +8,29 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class TasksController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public TasksController(AppDbContext context)
+    public TasksController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks()
+    public ActionResult<IEnumerable<TaskItem>> GetTasks()
     {
-        return await _context.Tasks.ToListAsync();
+        return Ok(_store.GetTasks());
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TaskItem>> GetTask(string id)
+    public ActionResult<TaskItem> GetTask(string id)
     {
-        var item = await _context.Tasks.FindAsync(id);
+        var item = _store.GetTask(id);
         if (item == null) return NotFound();
-        return item;
+        return Ok(item);
     }
 
     [HttpPost]
-    public async Task<ActionResult<TaskItem>> CreateTask([FromBody] TaskItem item)
+    public ActionResult<TaskItem> CreateTask([FromBody] TaskItem item)
     {
         if (string.IsNullOrWhiteSpace(item.Id))
         {
@@ -43,13 +42,12 @@ public class TasksController : ControllerBase
         else if (string.IsNullOrWhiteSpace(item.AssignedTo) && !string.IsNullOrWhiteSpace(item.AssignedUser))
             item.AssignedTo = item.AssignedUser;
 
-        _context.Tasks.Add(item);
-        await _context.SaveChangesAsync();
+        _store.AddTask(item);
         return CreatedAtAction(nameof(GetTask), new { id = item.Id }, item);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTask(string id, [FromBody] TaskItem item)
+    public IActionResult UpdateTask(string id, [FromBody] TaskItem item)
     {
         if (id != item.Id)
         {
@@ -66,32 +64,16 @@ public class TasksController : ControllerBase
         else if (item.Status == "todo" || item.Status == "in_progress")
             item.Completed = false;
 
-        var existing = await _context.Tasks.FindAsync(id);
-        if (existing == null)
-        {
-            _context.Tasks.Add(item);
-        }
-        else
-        {
-            _context.Entry(existing).CurrentValues.SetValues(item);
-            existing.AssignedUser = item.AssignedUser;
-            existing.AssignedTo = item.AssignedTo ?? "";
-            existing.Completed = item.Completed;
-            _context.Entry(existing).State = EntityState.Modified;
-        }
-
-        await _context.SaveChangesAsync();
+        _store.UpdateTask(id, item);
         return Ok(item);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTask(string id)
+    public IActionResult DeleteTask(string id)
     {
-        var item = await _context.Tasks.FindAsync(id);
-        if (item == null) return NotFound();
+        var deleted = _store.DeleteTask(id);
+        if (!deleted) return NotFound();
 
-        _context.Tasks.Remove(item);
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 }

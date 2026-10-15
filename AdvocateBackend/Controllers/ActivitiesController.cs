@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -9,29 +8,28 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class ActivitiesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public ActivitiesController(AppDbContext context)
+    public ActivitiesController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ActivityItem>>> GetActivities()
+    public ActionResult<IEnumerable<ActivityItem>> GetActivities()
     {
-        return await _context.Activities.OrderByDescending(a => a.Id).ToListAsync();
+        return Ok(_store.GetActivities());
     }
 
     [HttpPost]
-    public async Task<ActionResult<ActivityItem>> CreateActivity([FromBody] ActivityItem item)
+    public ActionResult<ActivityItem> CreateActivity([FromBody] ActivityItem item)
     {
         if (string.IsNullOrWhiteSpace(item.Id))
         {
             item.Id = "act_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        _context.Activities.Add(item);
-        await _context.SaveChangesAsync();
+        _store.AddActivity(item);
         return Ok(item);
     }
 }

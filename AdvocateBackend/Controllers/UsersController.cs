@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -9,59 +8,48 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public UsersController(AppDbContext context)
+    public UsersController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<UserItem>>> GetUsers()
+    public ActionResult<IEnumerable<UserItem>> GetUsers()
     {
-        return await _context.Users.ToListAsync();
+        return Ok(_store.GetUsers());
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserItem>> GetUser(string id)
+    public ActionResult<UserItem> GetUser(string id)
     {
-        var item = await _context.Users.FindAsync(id);
+        var item = _store.GetUser(id);
         if (item == null) return NotFound();
-        return item;
+        return Ok(item);
     }
 
     [HttpPost]
-    public async Task<ActionResult<UserItem>> CreateUser([FromBody] UserItem item)
+    public ActionResult<UserItem> CreateUser([FromBody] UserItem item)
     {
         if (string.IsNullOrWhiteSpace(item.Id))
         {
             item.Id = "usr_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        _context.Users.Add(item);
-        await _context.SaveChangesAsync();
+        _store.AddUser(item);
         return CreatedAtAction(nameof(GetUser), new { id = item.Id }, item);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(string id, [FromBody] UserItem item)
+    public IActionResult UpdateUser(string id, [FromBody] UserItem item)
     {
         if (id != item.Id)
         {
             item.Id = id;
         }
 
-        var existing = await _context.Users.FindAsync(id);
-        if (existing == null)
-        {
-            _context.Users.Add(item);
-        }
-        else
-        {
-            _context.Entry(existing).CurrentValues.SetValues(item);
-        }
-
-        await _context.SaveChangesAsync();
+        _store.UpdateUser(id, item);
         return Ok(item);
     }
 }

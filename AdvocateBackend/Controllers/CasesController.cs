@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -9,96 +8,57 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class CasesController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public CasesController(AppDbContext context)
+    public CasesController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CaseItem>>> GetCases()
+    public ActionResult<IEnumerable<CaseItem>> GetCases()
     {
-        return await _context.Cases.ToListAsync();
+        return Ok(_store.GetCases());
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<CaseItem>> GetCase(string id)
+    public ActionResult<CaseItem> GetCase(string id)
     {
-        var item = await _context.Cases.FindAsync(id);
+        var item = _store.GetCase(id);
         if (item == null) return NotFound();
-        return item;
+        return Ok(item);
     }
 
     [HttpPost]
-    public async Task<ActionResult<CaseItem>> CreateCase([FromBody] CaseItem item)
+    public ActionResult<CaseItem> CreateCase([FromBody] CaseItem item)
     {
         if (string.IsNullOrWhiteSpace(item.Id))
         {
             item.Id = "case_" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        _context.Cases.Add(item);
-        await _context.SaveChangesAsync();
+        _store.AddCase(item);
         return CreatedAtAction(nameof(GetCase), new { id = item.Id }, item);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCase(string id, [FromBody] CaseItem item)
+    public IActionResult UpdateCase(string id, [FromBody] CaseItem item)
     {
         if (id != item.Id)
         {
             item.Id = id;
         }
 
-        var existing = await _context.Cases.FindAsync(id);
-        if (existing == null)
-        {
-            _context.Cases.Add(item);
-        }
-        else
-        {
-            _context.Entry(existing).CurrentValues.SetValues(item);
-            existing.ClientCoordinates = item.ClientCoordinates;
-            existing.Parties = item.Parties;
-            existing.Hearings = item.Hearings;
-            existing.Orders = item.Orders;
-            existing.CourtAppearances = item.CourtAppearances;
-            existing.Notes = item.Notes;
-            existing.AssignedJunior = item.AssignedJunior;
-            _context.Entry(existing).State = EntityState.Modified;
-        }
-
-        await _context.SaveChangesAsync();
+        _store.UpdateCase(id, item);
         return Ok(item);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCase(string id)
+    public IActionResult DeleteCase(string id)
     {
-        var item = await _context.Cases.FindAsync(id);
-        if (item == null) return NotFound(new { message = $"Case with ID '{id}' was not found." });
+        var deleted = _store.DeleteCase(id);
+        if (!deleted) return NotFound(new { message = $"Case with ID '{id}' was not found." });
 
-        _context.Cases.Remove(item);
-
-        // Also unlink this case from any clients
-        var linkedClients = await _context.Clients.ToListAsync();
-        foreach (var client in linkedClients)
-        {
-            if (client.LinkedCases != null && client.LinkedCases.Contains(id))
-            {
-                client.LinkedCases.Remove(id);
-            }
-        }
-
-        // Also unlink this case from any tasks
-        var linkedTasks = await _context.Tasks.Where(t => t.CaseId == id).ToListAsync();
-        foreach (var task in linkedTasks)
-        {
-            task.CaseId = null;
-        }
-
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 }

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using AdvocateApi.Data;
 using AdvocateApi.Models;
 
@@ -17,21 +16,21 @@ public class RbacRoleDto
 [Route("api/[controller]")]
 public class RbacController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _store;
 
-    public RbacController(AppDbContext context)
+    public RbacController(InMemoryDataStore store)
     {
-        _context = context;
+        _store = store;
     }
 
     [HttpGet]
-    public async Task<ActionResult<Dictionary<string, RbacRoleDto>>> GetRbacMatrix()
+    public ActionResult<Dictionary<string, RbacRoleDto>> GetRbacMatrix()
     {
-        var roles = await _context.RbacRoles.ToListAsync();
+        var roles = _store.GetRbacRoles();
         var result = new Dictionary<string, RbacRoleDto>();
-        foreach (var r in roles)
+        foreach (var (key, r) in roles)
         {
-            result[r.RoleKey] = new RbacRoleDto
+            result[key] = new RbacRoleDto
             {
                 Label = r.Label,
                 Avatar = r.Avatar,
@@ -43,11 +42,11 @@ public class RbacController : ControllerBase
     }
 
     [HttpPut]
-    public async Task<IActionResult> UpdateRbacMatrix([FromBody] Dictionary<string, RbacRoleDto> matrix)
+    public IActionResult UpdateRbacMatrix([FromBody] Dictionary<string, RbacRoleDto> matrix)
     {
         foreach (var (key, dto) in matrix)
         {
-            var existing = await _context.RbacRoles.FindAsync(key);
+            var existing = _store.GetRbacRole(key);
             if (existing != null)
             {
                 existing.Label = dto.Label;
@@ -57,7 +56,7 @@ public class RbacController : ControllerBase
             }
             else
             {
-                _context.RbacRoles.Add(new RbacRoleItem
+                _store.SetRbacRole(key, new RbacRoleItem
                 {
                     RoleKey = key,
                     Label = dto.Label,
@@ -68,7 +67,6 @@ public class RbacController : ControllerBase
             }
         }
 
-        await _context.SaveChangesAsync();
         return Ok(matrix);
     }
 }

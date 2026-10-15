@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using AdvocateApi.Data;
 
 namespace AdvocateApi.Controllers;
@@ -9,70 +7,33 @@ namespace AdvocateApi.Controllers;
 [Route("api/[controller]")]
 public class DatabaseController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly InMemoryDataStore _dataStore;
 
-    public DatabaseController(AppDbContext context)
+    public DatabaseController(InMemoryDataStore dataStore)
     {
-        _context = context;
+        _dataStore = dataStore;
     }
 
     [HttpGet("status")]
-    public async Task<IActionResult> GetStatus()
+    public IActionResult GetStatus()
     {
-        try
+        return Ok(new
         {
-            var canConnect = await _context.Database.CanConnectAsync();
-            if (!canConnect)
+            connected = true,
+            database = "In-Memory Mock Store",
+            mode = "Standalone Web API (No Database Required)",
+            serverVersion = "Standalone In-Memory v1.0",
+            schema = "None",
+            timestamp = DateTime.UtcNow,
+            counts = new
             {
-                return StatusCode(500, new { connected = false, message = "Could not connect to PostgreSQL" });
+                cases = _dataStore.CasesCount,
+                clients = _dataStore.ClientsCount,
+                appointments = _dataStore.AppointmentsCount,
+                tasks = _dataStore.TasksCount,
+                records = _dataStore.RecordsCount,
+                users = _dataStore.UsersCount
             }
-
-            var casesCount = await _context.Cases.CountAsync();
-            var clientsCount = await _context.Clients.CountAsync();
-            var apptsCount = await _context.Appointments.CountAsync();
-            var tasksCount = await _context.Tasks.CountAsync();
-            var recordsCount = await _context.Records.CountAsync();
-            var usersCount = await _context.Users.CountAsync();
-
-            string dbName = "postgres";
-            string pgVersion = "PostgreSQL";
-            try
-            {
-                var conn = _context.Database.GetDbConnection();
-                if (!string.IsNullOrEmpty(conn.Database)) dbName = conn.Database;
-                if (!string.IsNullOrEmpty(conn.ServerVersion)) pgVersion = conn.ServerVersion;
-            }
-            catch
-            {
-                // Fallback safe extraction
-            }
-
-            return Ok(new
-            {
-                connected = true,
-                database = dbName,
-                schema = "AWS",
-                serverVersion = pgVersion,
-                timestamp = DateTime.UtcNow,
-                counts = new
-                {
-                    cases = casesCount,
-                    clients = clientsCount,
-                    appointments = apptsCount,
-                    tasks = tasksCount,
-                    records = recordsCount,
-                    users = usersCount
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                connected = false,
-                error = ex.Message,
-                details = ex.InnerException?.Message
-            });
-        }
+        });
     }
 }
